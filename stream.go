@@ -8,11 +8,13 @@ package gonativeextractor
 #include <nativeextractor/stream.h>
 bool extractor_c_add_miner_from_so(extractor_c * self, const char * miner_so_path, const char * miner_name, void * params );
 const char * extractor_get_last_error(extractor_c * self);
+void stream_c_destroy(stream_c * self);
 */
 import "C"
 import (
 	"fmt"
 	"io"
+	"unsafe"
 )
 
 type Streamer interface {
@@ -35,12 +37,26 @@ func (ego *FileStream) Check() bool {
 	return ego.Ptr.stream.state_flags&C.STREAM_FAILED == 0
 }
 
+// NewFileStream returns a pointer to created file stream from file.
 func NewFileStream(path string) (*FileStream, error) {
 	out := FileStream{Path: path}
 	out.Ptr = C.stream_file_c_new(C.CString(path))
 	if !out.Check() {
-		return nil, fmt.Errorf("Seek out of bounds")
+		return nil, fmt.Errorf("Unable to create FileStream.")
 	}
 
 	return &out, nil
+}
+
+// Closes opened file stream.
+// If its already closed returns error.
+func (ego *FileStream) Close() error {
+	if ego.Ptr == nil {
+		return fmt.Errorf("FileStream has been already closed.")
+	}
+	C.stream_c_destroy(&ego.Ptr.stream)
+	C.free(unsafe.Pointer(ego.Ptr))
+	ego.Ptr = nil
+	return nil
+
 }

@@ -20,4 +20,14 @@ func TestFileStream(t *testing.T) {
 			t.Errorf("Error expected but not set")
 		}
 	})
+
+	t.Run("closestream", func(t *testing.T) {
+		s, _ := gonativeextractor.NewFileStream("./fixtures/create_stream.txt")
+		if s.Close() != nil {
+			t.Errorf("Error unexpected")
+		}
+		if s.Close() == nil {
+			t.Errorf("Error expected but not set")
+		}
+	})
 }

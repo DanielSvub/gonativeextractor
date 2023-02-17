@@ -18,12 +18,17 @@ import (
 type Streamer interface {
 	Open()
 	Check() bool
+	GetStream() *C.struct_stream_c
 	io.Closer
 }
 
 type FileStream struct {
-	Path string
 	Ptr  *C.struct_stream_file_c
+	Path string
+}
+
+func (ego *FileStream) GetStream() *C.struct_stream_c {
+	return &ego.Ptr.stream
 }
 
 func (ego *FileStream) Check() bool {
@@ -34,7 +39,6 @@ func NewFileStream(path string) (*FileStream, error) {
 	out := FileStream{Path: path}
 	out.Ptr = C.stream_file_c_new(C.CString(path))
 	if !out.Check() {
-		fmt.Println("FD:::::", out.Ptr.stream.state_flags, C.STREAM_FAILED, out.Ptr.fd)
 		return nil, fmt.Errorf("Seek out of bounds")
 	}
 

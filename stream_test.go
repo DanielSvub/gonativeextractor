@@ -21,3 +21,27 @@ func TestFileStream(t *testing.T) {
 		}
 	})
 }
+
+func TestBufferStream(t *testing.T) {
+	t.Run("create", func(t *testing.T) {
+		stream, err := gonativeextractor.NewBufferStream([]byte("test"))
+		if err != nil {
+			t.Errorf("Stream creation failed.")
+		}
+		err = stream.Close()
+		if err != nil {
+			t.Errorf("Stream closing failed.")
+		}
+		err = stream.Close()
+		if err == nil {
+			t.Errorf("No error when closed the second time.")
+		}
+	})
+
+	t.Run("nil", func(t *testing.T) {
+		_, err := gonativeextractor.NewBufferStream(nil)
+		if err == nil {
+			t.Errorf("No error when nil given as buffer.")
+		}
+	})
+}

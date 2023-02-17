@@ -8,17 +8,18 @@ package gonativeextractor
 #include <nativeextractor/stream.h>
 bool extractor_c_add_miner_from_so(extractor_c * self, const char * miner_so_path, const char * miner_name, void * params );
 const char * extractor_get_last_error(extractor_c * self);
+void stream_c_destroy(stream_c* self);
 */
 import "C"
 import (
 	"fmt"
 	"io"
+	"unsafe"
 )
 
 type Streamer interface {
-	Open()
-	Check() bool
 	GetStream() *C.struct_stream_c
+	Check() bool
 	io.Closer
 }
 
@@ -43,4 +44,58 @@ func NewFileStream(path string) (*FileStream, error) {
 	}
 
 	return &out, nil
+}
+
+/*
+Buffer over heap memory.
+*/
+type BufferStream struct {
+	Buffer []byte
+	Ptr    *C.struct_stream_buffer_c
+}
+
+/*
+Creates a new BufferStream.
+Returns: pointer to a new instance of BufferStream
+*/
+func NewBufferStream(buffer []byte) (*BufferStream, error) {
+	if buffer == nil {
+		return nil, fmt.Errorf("Nil buffer given.")
+	}
+	out := BufferStream{Buffer: buffer}
+	out.Ptr = C.stream_buffer_c_new((*C.uchar)(&buffer[0]), C.ulong(len(buffer)))
+	if !out.Check() {
+		return nil, fmt.Errorf("Unable to create BufferStream.")
+	}
+	return &out, nil
+}
+
+/*
+Gets the inner stream structure.
+Returns: pointer to the C struct stream_c
+*/
+func (ego *BufferStream) GetStream() *C.struct_stream_c {
+	return &ego.Ptr.stream
+}
+
+/*
+Checks if an error occurred in a BufferStream.
+Returns: whether an error occurred or not
+*/
+func (ego *BufferStream) Check() bool {
+	return ego.Ptr.stream.state_flags&C.STREAM_FAILED == 0
+}
+
+/*
+Closes a BufferStream.
+Returns: error if the stream has been already closed, nil otherwise
+*/
+func (ego *BufferStream) Close() error {
+	if ego.Ptr == nil {
+		return fmt.Errorf("BufferStream has been already closed.")
+	}
+	C.stream_c_destroy(&ego.Ptr.stream)
+	C.free(unsafe.Pointer(ego.Ptr))
+	ego.Ptr = nil
+	return nil
 }

@@ -18,9 +18,8 @@ import (
 )
 
 type Streamer interface {
-	Open()
-	Check() bool
 	GetStream() *C.struct_stream_c
+	Check() bool
 	io.Closer
 }
 
@@ -59,4 +58,58 @@ func (ego *FileStream) Close() error {
 	ego.Ptr = nil
 	return nil
 
+}
+
+/*
+Buffer over heap memory.
+*/
+type BufferStream struct {
+	Buffer []byte
+	Ptr    *C.struct_stream_buffer_c
+}
+
+/*
+Creates a new BufferStream.
+Returns: pointer to a new instance of BufferStream
+*/
+func NewBufferStream(buffer []byte) (*BufferStream, error) {
+	if buffer == nil {
+		return nil, fmt.Errorf("Nil buffer given.")
+	}
+	out := BufferStream{Buffer: buffer}
+	out.Ptr = C.stream_buffer_c_new((*C.uchar)(&buffer[0]), C.ulong(len(buffer)))
+	if !out.Check() {
+		return nil, fmt.Errorf("Unable to create BufferStream.")
+	}
+	return &out, nil
+}
+
+/*
+Gets the inner stream structure.
+Returns: pointer to the C struct stream_c
+*/
+func (ego *BufferStream) GetStream() *C.struct_stream_c {
+	return &ego.Ptr.stream
+}
+
+/*
+Checks if an error occurred in a BufferStream.
+Returns: whether an error occurred or not
+*/
+func (ego *BufferStream) Check() bool {
+	return ego.Ptr.stream.state_flags&C.STREAM_FAILED == 0
+}
+
+/*
+Closes a BufferStream.
+Returns: error if the stream has been already closed, nil otherwise
+*/
+func (ego *BufferStream) Close() error {
+	if ego.Ptr == nil {
+		return fmt.Errorf("BufferStream has been already closed.")
+	}
+	C.stream_c_destroy(&ego.Ptr.stream)
+	C.free(unsafe.Pointer(ego.Ptr))
+	ego.Ptr = nil
+	return nil
 }

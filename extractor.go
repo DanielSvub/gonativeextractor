@@ -13,6 +13,7 @@ bool extractor_c_set_stream(extractor_c * self, stream_c * stream);
 bool extractor_c_unset_stream(extractor_c * self);
 bool extractor_set_flags(extractor_c * self, unsigned flags);
 bool extractor_unset_flags(extractor_c * self, unsigned flags);
+occurrence_t** next(extractor_c * self, unsigned batch);
 */
 import "C"
 import (
@@ -20,6 +21,29 @@ import (
 	"runtime"
 	"unsafe"
 )
+
+type Occurrence struct {
+	Str   string
+	Pos   uint64
+	Upos  uint64
+	Len   uint32
+	Ulen  uint32
+	Label string
+	Prob  float64
+}
+
+type DlSymbol struct {
+	// Path to the .so library
+	ldpath string
+	// Miner function name
+	ldsymb string
+	// Meta info about miner functions and labels
+	meta []string
+	// Miner params
+	params string
+	// Pointer to the loaded .so library
+	ldptr unsafe.Pointer
+}
 
 /*
 - E_NO_ENCLOSED_OCCURRENCES disables enclosed occurrence feature.
@@ -36,19 +60,18 @@ Analyzes next batch with miners.
 type Extractor struct {
 	miners    []C.struct_miner_c
 	batch     int
-	stream    *Streamer
+	stream    Streamer
 	flags     uint32
 	threads   int
 	extractor *C.struct_extractor_c
 }
 
 /*
-Creates a new Extractor
+Creates a new Extractor.
 Parameters:
   - batch: number of logical symbols to be analyzed in the stream
   - threads: number of threads for miners to run on
   - flags: initial flags
-
 Returns: pointer to a new instance of Extractor
 */
 func NewExtractor(batch int, threads int, flags uint32) *Extractor {
@@ -98,7 +121,7 @@ func (ego *Extractor) SetStream(stream Streamer) error {
 	if !ok {
 		return fmt.Errorf("Unable to set stream.")
 	}
-	ego.stream = &stream
+	ego.stream = stream
 	return nil
 }
 
@@ -150,4 +173,73 @@ func (ego *Extractor) UnsetFlags(flags uint32) error {
 	}
 	ego.flags = uint32(ego.extractor.flags)
 	return nil
+}
+
+func (ego *Extractor) GetLastError() error {
+	err := C.GoString(C.extractor_get_last_error(ego.extractor))
+	if err == "" {
+		return nil
+	}
+	return fmt.Errorf(err)
+}
+
+func (ego *Extractor) Eof() bool {
+	return ego.extractor.flags&C.STREAM_EOF == 0
+}
+
+func (ego *Extractor) Meta() []DlSymbol {
+
+	dlSymbols := ego.extractor.dlsymbols
+	result := make([]DlSymbol, 0)
+
+	for i := 0; true; i++ {
+		elem := (*C.dl_symbol_t)(unsafe.Add(unsafe.Pointer(dlSymbols), i*int(unsafe.Sizeof(dlSymbols))))
+		if elem == nil {
+			break
+		}
+		meta := make([]string, 0)
+		for j := 0; true; j++ {
+			str := (*C.char)(unsafe.Add(unsafe.Pointer(elem.meta), j*int(unsafe.Sizeof(elem.meta))))
+			meta = append(meta, C.GoString(str))
+		}
+		result = append(result, DlSymbol{
+			ldpath: C.GoString(elem.ldpath),
+			ldsymb: C.GoString(elem.ldsymb),
+			meta:   meta,
+			params: C.GoString(elem.params),
+			ldptr:  unsafe.Pointer(elem.ldptr),
+		})
+	}
+
+	return result
+
+}
+
+func (ego *Extractor) Next() ([]Occurrence, error) {
+
+	if !ego.stream.Check() {
+		return nil, fmt.Errorf("Stream is not set.")
+	}
+
+	occurrences := C.next(ego.extractor, C.uint(ego.batch))
+	result := make([]Occurrence, 0)
+
+	for i := 0; true; i++ {
+		elem := (*C.struct_occurrence_t)(unsafe.Add(unsafe.Pointer(occurrences), i*int(unsafe.Sizeof(occurrences))))
+		if elem == nil {
+			break
+		}
+		result = append(result, Occurrence{
+			Str:   C.GoString(elem.str),
+			Pos:   uint64(elem.pos),
+			Upos:  uint64(elem.upos),
+			Len:   uint32(elem.len),
+			Ulen:  uint32(elem.ulen),
+			Label: C.GoString(elem.label),
+			Prob:  float64(elem.prob),
+		})
+	}
+
+	return result, nil
+
 }

@@ -22,6 +22,15 @@ import (
 )
 
 /*
+- E_NO_ENCLOSED_OCCURRENCES disables enclosed occurrence feature.
+- E_SORT_RESULTS enables results ascending sorting of occurrence records.
+*/
+const (
+	E_NO_ENCLOSED_OCCURRENCES = 1 << 0
+	E_SORT_RESULTS            = 1 << 1
+)
+
+/*
 Analyzes next batch with miners.
 */
 type Extractor struct {
@@ -76,6 +85,14 @@ func (ego *Extractor) Close() error {
 	return nil
 }
 
+/*
+Sets stream to the Extractor.
+Parameters:
+  - stream an instance of Streamer interface.
+
+Returns:
+  - error.
+*/
 func (ego *Extractor) SetStream(stream Streamer) error {
 	ok := C.extractor_c_set_stream(ego.extractor, stream.GetStream())
 	if !ok {
@@ -85,7 +102,12 @@ func (ego *Extractor) SetStream(stream Streamer) error {
 	return nil
 }
 
-func (ego *Extractor) UnsetStream(stream *Streamer) error {
+/*
+Unsets stream attached to the Extractor.
+Returns:
+  - error.
+*/
+func (ego *Extractor) UnsetStream() error {
 	ok := C.extractor_c_unset_stream(ego.extractor)
 	if !ok {
 		return fmt.Errorf("Unable to unset stream.")
@@ -94,6 +116,15 @@ func (ego *Extractor) UnsetStream(stream *Streamer) error {
 	return nil
 }
 
+/*
+Set NativeExtractor flags.
+Parameters:
+  - flags:
+  - valid flags are these E_NO_ENCLOSED_OCCURRENCES, E_SORT_RESULTS.
+
+Returns:
+  - error.
+*/
 func (ego *Extractor) SetFlags(flags uint32) error {
 	ok := C.extractor_set_flags(ego.extractor, C.uint(flags))
 	if !ok {
@@ -103,6 +134,15 @@ func (ego *Extractor) SetFlags(flags uint32) error {
 	return nil
 }
 
+/*
+Unsets flags.
+Parameters:
+  - flags:
+  - valid flags are these E_NO_ENCLOSED_OCCURRENCES, E_SORT_RESULTS.
+
+Returns:
+  - error.
+*/
 func (ego *Extractor) UnsetFlags(flags uint32) error {
 	ok := C.extractor_unset_flags(ego.extractor, C.uint(flags))
 	if !ok {

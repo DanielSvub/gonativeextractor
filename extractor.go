@@ -13,6 +13,7 @@ bool extractor_c_set_stream(extractor_c * self, stream_c * stream);
 bool extractor_c_unset_stream(extractor_c * self);
 bool extractor_set_flags(extractor_c * self, unsigned flags);
 bool extractor_unset_flags(extractor_c * self, unsigned flags);
+const char * extractor_get_last_error(extractor_c * self);
 */
 import "C"
 import (
@@ -29,6 +30,9 @@ const (
 	E_NO_ENCLOSED_OCCURRENCES = 1 << 0
 	E_SORT_RESULTS            = 1 << 1
 )
+
+/* Default path to .so libs representing miners. */
+const DEFAULT_MINERS_PATH = "/usr/lib/nativeextractor_miners"
 
 /*
 Analyzes next batch with miners.
@@ -150,4 +154,26 @@ func (ego *Extractor) UnsetFlags(flags uint32) error {
 	}
 	ego.flags = uint32(ego.extractor.flags)
 	return nil
+}
+
+/*
+Loads a Miner from a Shared Object (.so library).
+Parameters:
+  - sodir a path to the shared object,
+  - symbol shared object symbol,
+  - params (Optional) may be empty array or nil.
+*/
+func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) error {
+	var data unsafe.Pointer
+	if params == nil {
+		data = nil
+	} else {
+		data = unsafe.Pointer(&params[0])
+	}
+
+	if C.extractor_c_add_miner_from_so(ego.extractor, C.CString(sodir), C.CString(symbol), data) {
+		return nil
+	}
+
+	return fmt.Errorf(C.GoString(C.extractor_get_last_error(ego.extractor)))
 }

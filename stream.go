@@ -28,15 +28,29 @@ type FileStream struct {
 	Path string
 }
 
+/*
+Gets the inner stream structure.
+Returns: pointer to the C struct stream_c
+*/
 func (ego *FileStream) GetStream() *C.struct_stream_c {
 	return &ego.Ptr.stream
 }
 
+/*
+Checks if an error occurred in a FileStream.
+Returns: whether an error occurred or not
+*/
 func (ego *FileStream) Check() bool {
 	return ego.Ptr.stream.state_flags&C.STREAM_FAILED == 0
 }
 
-// NewFileStream returns a pointer to created file stream from file.
+/*
+NewFileStream returns a pointer to created file stream from file.
+Parameters:
+  - path: path to a file
+
+Returns: pointer to a new instance of FileStream
+*/
 func NewFileStream(path string) (*FileStream, error) {
 	out := FileStream{Path: path}
 	out.Ptr = C.stream_file_c_new(C.CString(path))
@@ -47,8 +61,10 @@ func NewFileStream(path string) (*FileStream, error) {
 	return &out, nil
 }
 
-// Closes opened file stream.
-// If its already closed returns error.
+/*
+Closes a FileStream.
+Returns: error if the stream has been already closed, nil otherwise
+*/
 func (ego *FileStream) Close() error {
 	if ego.Ptr == nil {
 		return fmt.Errorf("FileStream has been already closed.")

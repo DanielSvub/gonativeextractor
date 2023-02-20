@@ -43,16 +43,10 @@ func TestExtractor(t *testing.T) {
 		e.SetStream(st)
 
 		for !e.Eof() {
-			occ, err := e.Next()
-
+			_, err := e.Next()
 			if err != nil {
 				t.Errorf(err.Error())
 			}
-
-			for _, el := range occ {
-				println(len(occ), el.Label)
-			}
-
 		}
 
 	})

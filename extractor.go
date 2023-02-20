@@ -227,6 +227,9 @@ func (ego *Extractor) Meta() []DlSymbol {
 		meta := make([]string, 0)
 		for j := 0; true; j++ {
 			str := (*C.char)(unsafe.Add(unsafe.Pointer(elem.meta), j*int(unsafe.Sizeof(elem.meta))))
+			if str == nil {
+				break
+			}
 			meta = append(meta, C.GoString(str))
 		}
 		result = append(result, DlSymbol{

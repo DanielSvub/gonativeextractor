@@ -17,12 +17,18 @@ import (
 	"unsafe"
 )
 
+/*
+Interface for streams.
+*/
 type Streamer interface {
 	GetStream() *C.struct_stream_c
 	Check() bool
 	io.Closer
 }
 
+/*
+Structure representing stream from file.
+*/
 type FileStream struct {
 	Ptr  *C.struct_stream_file_c
 	Path string

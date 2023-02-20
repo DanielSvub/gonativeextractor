@@ -211,7 +211,7 @@ func (ego *Extractor) GetLastError() error {
 }
 
 func (ego *Extractor) Eof() bool {
-	return ego.extractor.flags&C.STREAM_EOF == 0
+	return ego.extractor.flags&C.STREAM_EOF != 0
 }
 
 func (ego *Extractor) Meta() []DlSymbol {
@@ -251,23 +251,38 @@ func (ego *Extractor) Next() ([]Occurrence, error) {
 		return nil, fmt.Errorf("Stream is not set.")
 	}
 
+	if ego.Eof() {
+		return nil, fmt.Errorf("Out of bounds.")
+	}
+
 	occurrences := C.next(ego.extractor, C.uint(ego.batch))
 	result := make([]Occurrence, 0)
 
+	elem := (**C.struct_occurrence_t)(unsafe.Pointer(occurrences))
+
 	for i := 0; true; i++ {
-		elem := (*C.struct_occurrence_t)(unsafe.Add(unsafe.Pointer(occurrences), i*int(unsafe.Sizeof(occurrences))))
-		if elem == nil {
+		occ := *elem
+
+		if occ == nil {
 			break
 		}
+
+		println("BEGIN")
+		println(occ)
+		println("END")
+
 		result = append(result, Occurrence{
-			Str:   C.GoString(elem.str),
-			Pos:   uint64(elem.pos),
-			Upos:  uint64(elem.upos),
-			Len:   uint32(elem.len),
-			Ulen:  uint32(elem.ulen),
-			Label: C.GoString(elem.label),
-			Prob:  float64(elem.prob),
+			Str:   C.GoString(occ.str),
+			Pos:   uint64(occ.pos),
+			Upos:  uint64(occ.upos),
+			Len:   uint32(occ.len),
+			Ulen:  uint32(occ.ulen),
+			Label: C.GoString(occ.label),
+			Prob:  float64(occ.prob),
 		})
+
+		elem = (**C.struct_occurrence_t)(unsafe.Add(unsafe.Pointer(&elem), 8))
+
 	}
 
 	return result, nil

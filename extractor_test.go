@@ -49,6 +49,25 @@ func TestExtractor(t *testing.T) {
 			}
 		}
 
+		e.Meta()
+
+		err = e.GetLastError()
+		if err == nil {
+			t.Errorf("No errors but there should be.")
+		}
+
+		e.UnsetStream()
+
+		for !e.Eof() {
+			_, err := e.Next()
+			if err == nil {
+				t.Errorf("Stream is set but should not be.")
+			}
+		}
+
+		e.SetFlags(1 << 1)
+		e.UnsetFlags(1 << 1)
+
 	})
 
 }

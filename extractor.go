@@ -10,7 +10,7 @@ bool extractor_c_add_miner_from_so(extractor_c * self, const char * miner_so_pat
 const char * extractor_get_last_error(extractor_c * self);
 void extractor_c_destroy(extractor_c * self);
 bool extractor_c_set_stream(extractor_c * self, stream_c * stream);
-bool extractor_c_unset_stream(extractor_c * self);
+void extractor_c_unset_stream(extractor_c * self);
 bool extractor_set_flags(extractor_c * self, unsigned flags);
 bool extractor_unset_flags(extractor_c * self, unsigned flags);
 occurrence_t** next(extractor_c * self, unsigned batch);
@@ -35,15 +35,15 @@ type Occurrence struct {
 
 type DlSymbol struct {
 	// Path to the .so library
-	ldpath string
+	Ldpath string
 	// Miner function name
-	ldsymb string
+	Ldsymb string
 	// Meta info about miner functions and labels
-	meta []string
+	Meta []string
 	// Miner params
-	params string
+	Params string
 	// Pointer to the loaded .so library
-	ldptr unsafe.Pointer
+	Ldptr unsafe.Pointer
 }
 
 /*
@@ -132,16 +132,10 @@ func (ego *Extractor) SetStream(stream Streamer) error {
 
 /*
 Unsets stream attached to the Extractor.
-Returns:
-  - error.
 */
-func (ego *Extractor) UnsetStream() error {
-	ok := C.extractor_c_unset_stream(ego.extractor)
-	if !ok {
-		return fmt.Errorf("Unable to unset stream.")
-	}
+func (ego *Extractor) UnsetStream() {
+	C.extractor_c_unset_stream(ego.extractor)
 	ego.stream = nil
-	return nil
 }
 
 /*
@@ -211,6 +205,9 @@ func (ego *Extractor) GetLastError() error {
 }
 
 func (ego *Extractor) Eof() bool {
+	if ego.stream == nil {
+		return true
+	}
 	return ego.extractor.stream.state_flags&C.STREAM_EOF != 0
 }
 
@@ -220,24 +217,24 @@ func (ego *Extractor) Meta() []DlSymbol {
 	result := make([]DlSymbol, 0)
 
 	for i := 0; true; i++ {
-		elem := (*C.dl_symbol_t)(unsafe.Add(unsafe.Pointer(dlSymbols), i*int(unsafe.Sizeof(dlSymbols))))
+		elem := *(**C.dl_symbol_t)(unsafe.Add(unsafe.Pointer(dlSymbols), i*int(unsafe.Sizeof(dlSymbols))))
 		if elem == nil {
 			break
 		}
 		meta := make([]string, 0)
 		for j := 0; true; j++ {
-			str := (*C.char)(unsafe.Add(unsafe.Pointer(elem.meta), j*int(unsafe.Sizeof(elem.meta))))
+			str := *(**C.char)(unsafe.Add(unsafe.Pointer(elem.meta), j*int(unsafe.Sizeof(elem.meta))))
 			if str == nil {
 				break
 			}
 			meta = append(meta, C.GoString(str))
 		}
 		result = append(result, DlSymbol{
-			ldpath: C.GoString(elem.ldpath),
-			ldsymb: C.GoString(elem.ldsymb),
-			meta:   meta,
-			params: C.GoString(elem.params),
-			ldptr:  unsafe.Pointer(elem.ldptr),
+			Ldpath: C.GoString(elem.ldpath),
+			Ldsymb: C.GoString(elem.ldsymb),
+			Meta:   meta,
+			Params: C.GoString(elem.params),
+			Ldptr:  unsafe.Pointer(elem.ldptr),
 		})
 	}
 
@@ -247,7 +244,7 @@ func (ego *Extractor) Meta() []DlSymbol {
 
 func (ego *Extractor) Next() ([]Occurrence, error) {
 
-	if !ego.stream.Check() {
+	if ego.stream == nil {
 		return nil, fmt.Errorf("Stream is not set.")
 	}
 

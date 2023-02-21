@@ -14,6 +14,7 @@ import "C"
 import (
 	"fmt"
 	"io"
+	"os"
 	"unsafe"
 )
 
@@ -60,6 +61,9 @@ Returns:
   - pointer to a new instance of FileStream
 */
 func NewFileStream(path string) (*FileStream, error) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil, fmt.Errorf("File does not exist.")
+	}
 	out := FileStream{Path: path}
 	out.Ptr = C.stream_file_c_new(C.CString(path))
 	if !out.Check() {

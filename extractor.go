@@ -3,6 +3,7 @@ package gonativeextractor
 /*
 #cgo CFLAGS: -I/usr/include/nativeextractor
 #cgo LDFLAGS: -lnativeextractor -lglib-2.0 -ldl
+#include <string.h>
 #include <nativeextractor/common.h>
 #include <nativeextractor/extractor.h>
 #include <nativeextractor/stream.h>
@@ -276,8 +277,10 @@ func (ego *Extractor) Next() ([]Occurrence, error) {
 	// Iterating over null terminated array of pointers (size of pointer added to address in each iteration)
 	for occ := occurrences; *occ != nil; occ = (**C.struct_occurrence_t)(unsafe.Add(unsafe.Pointer(occ), step)) {
 
+		cstr := C.strndup((*occ).str, C.size_t((*occ).len))
+
 		result = append(result, Occurrence{
-			Str:   C.GoString((*occ).str),
+			Str:   C.GoString(cstr),
 			Pos:   uint64((*occ).pos),
 			Upos:  uint64((*occ).upos),
 			Len:   uint32((*occ).len),
@@ -286,6 +289,7 @@ func (ego *Extractor) Next() ([]Occurrence, error) {
 			Prob:  float64((*occ).prob),
 		})
 
+		C.free(unsafe.Pointer(cstr))
 	}
 
 	return result, nil

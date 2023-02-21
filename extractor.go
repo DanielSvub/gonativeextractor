@@ -19,6 +19,7 @@ const char * extractor_get_last_error(extractor_c * self);
 import "C"
 import (
 	"fmt"
+	"math/bits"
 	"runtime"
 	"unsafe"
 )
@@ -109,6 +110,7 @@ func (ego *Extractor) Close() error {
 		return fmt.Errorf("Extractor has been already closed.")
 	}
 	C.extractor_c_destroy(ego.extractor)
+	C.free(unsafe.Pointer(ego.extractor))
 	ego.extractor = nil
 	return nil
 }
@@ -196,6 +198,11 @@ func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) err
 	return fmt.Errorf(C.GoString(C.extractor_get_last_error(ego.extractor)))
 }
 
+/*
+Gives the last error which occurred in Extractor.
+Returns:
+  - error, nil if no error occurred
+*/
 func (ego *Extractor) GetLastError() error {
 	err := C.GoString(C.extractor_get_last_error(ego.extractor))
 	if err == "" {
@@ -204,6 +211,11 @@ func (ego *Extractor) GetLastError() error {
 	return fmt.Errorf(err)
 }
 
+/*
+Checks if the attached stream ended.
+Returns:
+  - true if stream ended or no stream set, false otherwise
+*/
 func (ego *Extractor) Eof() bool {
 	if ego.stream == nil {
 		return true
@@ -211,60 +223,69 @@ func (ego *Extractor) Eof() bool {
 	return ego.extractor.stream.state_flags&C.STREAM_EOF != 0
 }
 
+/*
+Gives the meta information about Extractor.
+Returns:
+  - slice of structures with information about labels
+*/
 func (ego *Extractor) Meta() []DlSymbol {
 
-	dlSymbols := ego.extractor.dlsymbols
+	step := bits.UintSize / 8
 	result := make([]DlSymbol, 0)
 
-	for i := 0; true; i++ {
-		elem := *(**C.dl_symbol_t)(unsafe.Add(unsafe.Pointer(dlSymbols), i*int(unsafe.Sizeof(dlSymbols))))
-		if elem == nil {
-			break
-		}
+	// Iterating over null terminated array of pointers (size of pointer added to address in each iteration)
+	for elem := ego.extractor.dlsymbols; *elem != nil; elem = (**C.struct_dl_symbol_t)(unsafe.Add(unsafe.Pointer(elem), step)) {
+
 		meta := make([]string, 0)
-		for j := 0; true; j++ {
-			str := *(**C.char)(unsafe.Add(unsafe.Pointer(elem.meta), j*int(unsafe.Sizeof(elem.meta))))
-			if str == nil {
-				break
-			}
-			meta = append(meta, C.GoString(str))
+
+		// Iterating once more, same as the outer loop
+		for str := (*elem).meta; *str != nil; str = (**C.char)(unsafe.Add(unsafe.Pointer(&str), step)) {
+			meta = append(meta, C.GoString(*str))
 		}
+
 		result = append(result, DlSymbol{
-			Ldpath: C.GoString(elem.ldpath),
-			Ldsymb: C.GoString(elem.ldsymb),
+			Ldpath: C.GoString((*elem).ldpath),
+			Ldsymb: C.GoString((*elem).ldsymb),
 			Meta:   meta,
-			Params: C.GoString(elem.params),
-			Ldptr:  unsafe.Pointer(elem.ldptr),
+			Params: C.GoString((*elem).params),
+			Ldptr:  unsafe.Pointer((*elem).ldptr),
 		})
+
 	}
 
 	return result
 
 }
 
+/*
+Gives the next batch of found entities.
+Returns:
+  - slice of found occurrences
+  - error, if any occurred
+*/
 func (ego *Extractor) Next() ([]Occurrence, error) {
 
 	if ego.stream == nil {
 		return nil, fmt.Errorf("Stream is not set.")
 	}
 
+	step := bits.UintSize / 8
 	occurrences := C.next(ego.extractor, C.uint(ego.batch))
 	result := make([]Occurrence, 0)
 
-	for i := 0; true; i++ {
-		occ := *(**C.struct_occurrence_t)(unsafe.Add(unsafe.Pointer(occurrences), i*int(unsafe.Sizeof(occurrences))))
-		if occ == nil {
-			break
-		}
+	// Iterating over null terminated array of pointers (size of pointer added to address in each iteration)
+	for occ := occurrences; *occ != nil; occ = (**C.struct_occurrence_t)(unsafe.Add(unsafe.Pointer(occ), step)) {
+
 		result = append(result, Occurrence{
-			Str:   C.GoString(occ.str),
-			Pos:   uint64(occ.pos),
-			Upos:  uint64(occ.upos),
-			Len:   uint32(occ.len),
-			Ulen:  uint32(occ.ulen),
-			Label: C.GoString(occ.label),
-			Prob:  float64(occ.prob),
+			Str:   C.GoString((*occ).str),
+			Pos:   uint64((*occ).pos),
+			Upos:  uint64((*occ).upos),
+			Len:   uint32((*occ).len),
+			Ulen:  uint32((*occ).ulen),
+			Label: C.GoString((*occ).label),
+			Prob:  float64((*occ).prob),
 		})
+
 	}
 
 	return result, nil

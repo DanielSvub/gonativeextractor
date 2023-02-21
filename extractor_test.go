@@ -39,7 +39,10 @@ func TestExtractor(t *testing.T) {
 			t.Errorf("Should return unknown path to the .so.")
 		}
 
-		st, _ := gonativeextractor.NewBufferStream([]byte("Hello world byte"))
+		st, err := gonativeextractor.NewBufferStream([]byte("Hello world byte"))
+		if err != nil {
+			t.Errorf(err.Error())
+		}
 		e.SetStream(st)
 
 		for !e.Eof() {
@@ -67,6 +70,8 @@ func TestExtractor(t *testing.T) {
 
 		e.SetFlags(1 << 1)
 		e.UnsetFlags(1 << 1)
+
+		e.Close()
 
 	})
 

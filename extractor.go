@@ -26,19 +26,6 @@ import (
 )
 
 /*
-Struct representing one found occurrence.
-*/
-type Occurrence struct {
-	Str   string
-	Pos   uint64
-	Upos  uint64
-	Len   uint32
-	Ulen  uint32
-	Label string
-	Prob  float64
-}
-
-/*
 Structure with information about a miner.
 */
 type DlSymbol struct {
@@ -111,7 +98,7 @@ func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 Destroys the Extractor.
 Returns: error if the extractor has been already closed, nil otherwise.
 */
-func (ego *Extractor) Close() error {
+func (ego *Extractor) Destroy() error {
 	if ego.extractor == nil {
 		return fmt.Errorf("Extractor has been already closed.")
 	}
@@ -264,7 +251,7 @@ Returns:
   - slice of found occurrences,
   - error, if any occurred.
 */
-func (ego *Extractor) Next() ([]Occurrence, error) {
+func (ego *Extractor) Next() ([]Occurrencer, error) {
 
 	if ego.stream == nil {
 		return nil, fmt.Errorf("Stream is not set.")
@@ -272,24 +259,11 @@ func (ego *Extractor) Next() ([]Occurrence, error) {
 
 	step := bits.UintSize / 8
 	occurrences := C.next(ego.extractor, C.uint(ego.batch))
-	result := make([]Occurrence, 0)
+	result := make([]Occurrencer, 0)
 
 	// Iterating over null terminated array of pointers (size of pointer added to address in each iteration)
 	for occ := occurrences; *occ != nil; occ = (**C.struct_occurrence_t)(unsafe.Add(unsafe.Pointer(occ), step)) {
-
-		cstr := C.strndup((*occ).str, C.size_t((*occ).len))
-
-		result = append(result, Occurrence{
-			Str:   C.GoString(cstr),
-			Pos:   uint64((*occ).pos),
-			Upos:  uint64((*occ).upos),
-			Len:   uint32((*occ).len),
-			Ulen:  uint32((*occ).ulen),
-			Label: C.GoString((*occ).label),
-			Prob:  float64((*occ).prob),
-		})
-
-		C.free(unsafe.Pointer(cstr))
+		result = append(result, &Occurrence{*occ})
 	}
 
 	return result, nil

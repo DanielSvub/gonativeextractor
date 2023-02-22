@@ -7,71 +7,127 @@ import (
 )
 
 func TestExtractor(t *testing.T) {
-	t.Run("create", func(t *testing.T) {
-		e := gonativeextractor.NewExtractor(-1, -1, 0)
-		if e == nil {
-			t.Errorf("Should return non nil pointer to Extractor")
-		}
-
-		if e.Close() != nil {
-			t.Errorf("Problem in extractor close.")
-		}
-		if e.Close() == nil {
-			t.Errorf("Not throwing error when closed the second time.")
-		}
-	})
 
 	t.Run("glob", func(t *testing.T) {
+
+		// Creating extractor
 		e := gonativeextractor.NewExtractor(-1, -1, 0)
 
-		err := e.AddMinerSo(gonativeextractor.DEFAULT_MINERS_PATH+"/glob_entities.so", "match_glob", []byte("world"))
+		// Adding miner
+		err := e.AddMinerSo(gonativeextractor.DEFAULT_MINERS_PATH+"/glob_entities.so", "match_glob", []byte("world\x00"))
 		if err != nil {
-			t.Errorf(err.Error())
+			t.Fatal(err.Error())
 		}
 
-		err = e.AddMinerSo(gonativeextractor.DEFAULT_MINERS_PATH+"/glob_entities.so", "match_glob_hhh", []byte("world"))
+		// Adding non-existent miner
+		err = e.AddMinerSo(gonativeextractor.DEFAULT_MINERS_PATH+"/glob_entities.so", "match_glob_hhh", []byte("world\x00"))
 		if err == nil {
-			t.Errorf("Should return unknown symbol error.")
+			t.Error("Should return unknown symbol error.")
 		}
 
-		err = e.AddMinerSo(gonativeextractor.DEFAULT_MINERS_PATH+"/glob_entities_hhh.so", "match_glob", []byte("world"))
+		// Adding miner from non-existent file
+		err = e.AddMinerSo(gonativeextractor.DEFAULT_MINERS_PATH+"/glob_entities_hhh.so", "match_glob", []byte("world\x00"))
 		if err == nil {
-			t.Errorf("Should return unknown path to the .so.")
+			t.Error("Should return unknown path to the .so.")
 		}
 
-		st, err := gonativeextractor.NewBufferStream([]byte("Hello world byte"))
+		// Creating and setting stream
+		st, err := gonativeextractor.NewBufferStream([]byte("Hello world byte\x00"))
 		if err != nil {
-			t.Errorf(err.Error())
+			t.Fatal(err.Error())
 		}
-		e.SetStream(st)
+		err = e.SetStream(st)
+		if err != nil {
+			t.Fatal(err.Error())
+		}
 
+		// Output validation
 		for !e.Eof() {
-			_, err := e.Next()
+			r, err := e.Next()
 			if err != nil {
-				t.Errorf(err.Error())
+				t.Fatal(err.Error())
+			}
+			if len(r) != 1 {
+				t.Fatal("Should find exactly one occurrence.")
+			}
+			if r[0].Str() != "world" {
+				t.Error("Str should be 'world'.")
+			}
+			if r[0].Pos() != 6 {
+				t.Error("Pos should be 6.")
+			}
+			if r[0].Upos() != 6 {
+				t.Error("Upos should be 6.")
+			}
+			if r[0].Len() != 5 {
+				t.Error("Len should be 5.")
+			}
+			if r[0].Ulen() != 5 {
+				t.Error("Ulen should be 5.")
+			}
+			if r[0].Label() != "Glob" {
+				t.Error("Label should be 'Glob'.")
+			}
+			if r[0].Prob() != 1 {
+				t.Error("Prob should be 1.")
 			}
 		}
 
-		e.Meta()
-
-		err = e.GetLastError()
-		if err == nil {
-			t.Errorf("No errors but there should be.")
+		// Meta validation
+		meta := e.Meta()
+		if len(meta) != 1 {
+			t.Fatal("Meta should have exactly one element.")
+		}
+		if meta[0].Ldpath != gonativeextractor.DEFAULT_MINERS_PATH+"/glob_entities.so" {
+			t.Error("Wrong path in meta.")
+		}
+		if meta[0].Ldptr == nil {
+			t.Error("Nil pointer in meta.")
+		}
+		if meta[0].Ldsymb != "match_glob" {
+			t.Error("Ldsymb should be 'match_glob'.")
+		}
+		if meta[0].Params != "world" {
+			t.Error("Params should be 'world'.")
+		}
+		if len(meta[0].Meta) != 1 {
+			t.Fatal("Meta[0].Meta should have exactly one element.")
+		}
+		if meta[0].Meta[0] != "match_glob" {
+			t.Error("Meta[0].Meta[0] should be 'match_glob'.")
 		}
 
+		if e.GetLastError() == nil {
+			t.Error("No errors but there should be.")
+		}
+
+		// Unsetting stream
 		e.UnsetStream()
-
-		for !e.Eof() {
-			_, err := e.Next()
-			if err == nil {
-				t.Errorf("Stream is set but should not be.")
-			}
+		if !e.Eof() {
+			t.Error("Stream is set but should not be.")
+		}
+		_, err = e.Next()
+		if err == nil {
+			t.Error("Stream is set but should not be.")
 		}
 
-		e.SetFlags(1 << 1)
-		e.UnsetFlags(1 << 1)
+		// Setting and unsetting flags
+		err = e.SetFlags(gonativeextractor.E_SORT_RESULTS)
+		if err != nil {
+			t.Error(err.Error())
+		}
+		err = e.UnsetFlags(gonativeextractor.E_SORT_RESULTS)
+		if err != nil {
+			t.Error(err.Error())
+		}
 
-		e.Close()
+		// Destroying the extractor
+		if e.Destroy() != nil {
+			t.Error(err.Error())
+		}
+		if e.Destroy() == nil {
+			t.Error("Not throwing error when destroyed the second time.")
+		}
 
 	})
 

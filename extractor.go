@@ -41,13 +41,11 @@ type DlSymbol struct {
 	Ldptr unsafe.Pointer
 }
 
-/*
-- E_NO_ENCLOSED_OCCURRENCES disables enclosed occurrence feature.
-- E_SORT_RESULTS enables results ascending sorting of occurrence records.
-*/
 const (
+	// Disables enclosed occurrence feature.
 	E_NO_ENCLOSED_OCCURRENCES = 1 << 0
-	E_SORT_RESULTS            = 1 << 1
+	// Enables results ascending sorting of occurrence records.
+	E_SORT_RESULTS = 1 << 1
 )
 
 /* Default path to .so libs representing miners. */
@@ -66,10 +64,10 @@ type Extractor struct {
 }
 
 /*
-Creates a new Extractor.
+Creates a new Extractor. Has to be deallocated with 'Destroy' method after use.
 Parameters:
-  - batch - number of logical symbols to be analyzed in the stream,
-  - threads - number of threads for miners to run on,
+  - batch - number of logical symbols to be analyzed in the stream (if negative, defaults to 2^16),
+  - threads - number of threads for miners to run on (if negative, defaults to maximum threads available),
   - flags - initial flags.
 Returns: pointer to a new instance of Extractor.
 */
@@ -109,7 +107,7 @@ func (ego *Extractor) Destroy() error {
 }
 
 /*
-Sets stream to the Extractor.
+Sets a stream to the Extractor.
 Parameters:
   - stream - an instance of Streamer interface.
 Returns:
@@ -125,7 +123,7 @@ func (ego *Extractor) SetStream(stream Streamer) error {
 }
 
 /*
-Unsets stream attached to the Extractor.
+Unsets the stream attached to the Extractor.
 */
 func (ego *Extractor) UnsetStream() {
 	C.extractor_c_unset_stream(ego.extractor)
@@ -169,7 +167,7 @@ Loads a Miner from a Shared Object (.so library).
 Parameters:
   - sodir - a path to the shared object,
   - symbol - shared object symbol,
-  - params - optional (may be empty array or nil).
+  - params - optional (may be empty array or nil, but if present, has to be terminated with \x00).
 */
 func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) error {
 	var data unsafe.Pointer

@@ -100,7 +100,7 @@ type BufferStream struct {
 /*
 Creates a new BufferStream.
 Parameters:
-  - buffer - byte array for stream initialization.
+  - buffer - byte array for stream initialization (has to be terminated with \x00).
 Returns:
   - pointer to a new instance of BufferStream.
 */

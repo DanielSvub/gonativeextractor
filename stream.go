@@ -38,7 +38,7 @@ type FileStream struct {
 /*
 Gets the inner stream structure.
 Returns:
-  - pointer to the C struct stream_c
+  - pointer to the C struct stream_c.
 */
 func (ego *FileStream) GetStream() *C.struct_stream_c {
 	return &ego.Ptr.stream
@@ -47,7 +47,7 @@ func (ego *FileStream) GetStream() *C.struct_stream_c {
 /*
 Checks if an error occurred in a FileStream.
 Returns:
-  - true if an error occurred, false otherwise
+  - true if an error occurred, false otherwise.
 */
 func (ego *FileStream) Check() bool {
 	return ego.Ptr.stream.state_flags&C.STREAM_FAILED == 0
@@ -56,9 +56,9 @@ func (ego *FileStream) Check() bool {
 /*
 NewFileStream returns a pointer to created file stream from file.
 Parameters:
-  - path: path to a file
+  - path - path to a file.
 Returns:
-  - pointer to a new instance of FileStream
+  - pointer to a new instance of FileStream.
 */
 func NewFileStream(path string) (*FileStream, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -76,7 +76,7 @@ func NewFileStream(path string) (*FileStream, error) {
 /*
 Closes a FileStream.
 Returns:
-  - error if the stream has been already closed, nil otherwise
+  - error if the stream has been already closed, nil otherwise.
 */
 func (ego *FileStream) Close() error {
 	if ego.Ptr == nil {
@@ -100,9 +100,9 @@ type BufferStream struct {
 /*
 Creates a new BufferStream.
 Parameters:
-  - buffer: byte array for stream initialization
+  - buffer - byte array for stream initialization.
 Returns:
-  - pointer to a new instance of BufferStream
+  - pointer to a new instance of BufferStream.
 */
 func NewBufferStream(buffer []byte) (*BufferStream, error) {
 	if buffer == nil {
@@ -119,7 +119,7 @@ func NewBufferStream(buffer []byte) (*BufferStream, error) {
 /*
 Gets the inner stream structure.
 Returns:
-  - pointer to the C struct stream_c
+  - pointer to the C struct stream_c.
 */
 func (ego *BufferStream) GetStream() *C.struct_stream_c {
 	return &ego.Ptr.stream
@@ -128,7 +128,7 @@ func (ego *BufferStream) GetStream() *C.struct_stream_c {
 /*
 Checks if an error occurred in a BufferStream.
 Returns:
-  - true if an error occurred, false otherwise
+  - true if an error occurred, false otherwise.
 */
 func (ego *BufferStream) Check() bool {
 	return ego.Ptr.stream.state_flags&C.STREAM_FAILED == 0
@@ -137,7 +137,7 @@ func (ego *BufferStream) Check() bool {
 /*
 Closes a BufferStream.
 Returns:
-  - error if the stream has been already closed, nil otherwise
+  - error if the stream has been already closed, nil otherwise.
 */
 func (ego *BufferStream) Close() error {
 	if ego.Ptr == nil {

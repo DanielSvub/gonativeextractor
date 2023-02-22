@@ -25,6 +25,9 @@ import (
 	"unsafe"
 )
 
+/*
+Struct representing one found occurrence.
+*/
 type Occurrence struct {
 	Str   string
 	Pos   uint64
@@ -35,6 +38,9 @@ type Occurrence struct {
 	Prob  float64
 }
 
+/*
+Structure with information about a miner.
+*/
 type DlSymbol struct {
 	// Path to the .so library
 	Ldpath string
@@ -75,11 +81,10 @@ type Extractor struct {
 /*
 Creates a new Extractor.
 Parameters:
-  - batch: number of logical symbols to be analyzed in the stream
-  - threads: number of threads for miners to run on
-  - flags: initial flags
-
-Returns: pointer to a new instance of Extractor
+  - batch - number of logical symbols to be analyzed in the stream,
+  - threads - number of threads for miners to run on,
+  - flags - initial flags.
+Returns: pointer to a new instance of Extractor.
 */
 func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 	out := Extractor{}
@@ -103,8 +108,8 @@ func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 }
 
 /*
-Destroys the Extractor
-Returns: error if the extractor has been already closed, nil otherwise
+Destroys the Extractor.
+Returns: error if the extractor has been already closed, nil otherwise.
 */
 func (ego *Extractor) Close() error {
 	if ego.extractor == nil {
@@ -119,10 +124,9 @@ func (ego *Extractor) Close() error {
 /*
 Sets stream to the Extractor.
 Parameters:
-  - stream an instance of Streamer interface.
-
+  - stream - an instance of Streamer interface.
 Returns:
-  - error.
+  - error if any occurred, nil otherwise.
 */
 func (ego *Extractor) SetStream(stream Streamer) error {
 	ok := C.extractor_c_set_stream(ego.extractor, stream.GetStream())
@@ -144,11 +148,9 @@ func (ego *Extractor) UnsetStream() {
 /*
 Set NativeExtractor flags.
 Parameters:
-  - flags:
-  - valid flags are these E_NO_ENCLOSED_OCCURRENCES, E_SORT_RESULTS.
-
+  - flags - valid flags are E_NO_ENCLOSED_OCCURRENCES, E_SORT_RESULTS.
 Returns:
-  - error.
+  - error if any occurred, nil otherwise.
 */
 func (ego *Extractor) SetFlags(flags uint32) error {
 	ok := C.extractor_set_flags(ego.extractor, C.uint(flags))
@@ -162,11 +164,9 @@ func (ego *Extractor) SetFlags(flags uint32) error {
 /*
 Unsets flags.
 Parameters:
-  - flags:
-  - valid flags are these E_NO_ENCLOSED_OCCURRENCES, E_SORT_RESULTS.
-
+  - flags - valid flags are E_NO_ENCLOSED_OCCURRENCES, E_SORT_RESULTS.
 Returns:
-  - error.
+  - error if any occurred, nil otherwise.
 */
 func (ego *Extractor) UnsetFlags(flags uint32) error {
 	ok := C.extractor_unset_flags(ego.extractor, C.uint(flags))
@@ -180,9 +180,9 @@ func (ego *Extractor) UnsetFlags(flags uint32) error {
 /*
 Loads a Miner from a Shared Object (.so library).
 Parameters:
-  - sodir a path to the shared object,
-  - symbol shared object symbol,
-  - params (Optional) may be empty array or nil.
+  - sodir - a path to the shared object,
+  - symbol - shared object symbol,
+  - params - optional (may be empty array or nil).
 */
 func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) error {
 	var data unsafe.Pointer
@@ -202,7 +202,7 @@ func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) err
 /*
 Gives the last error which occurred in Extractor.
 Returns:
-  - error, nil if no error occurred
+  - error, nil if no error occurred.
 */
 func (ego *Extractor) GetLastError() error {
 	err := C.GoString(C.extractor_get_last_error(ego.extractor))
@@ -215,7 +215,7 @@ func (ego *Extractor) GetLastError() error {
 /*
 Checks if the attached stream ended.
 Returns:
-  - true if stream ended or no stream set, false otherwise
+  - true if stream ended or no stream set, false otherwise.
 */
 func (ego *Extractor) Eof() bool {
 	if ego.stream == nil {
@@ -227,7 +227,7 @@ func (ego *Extractor) Eof() bool {
 /*
 Gives the meta information about Extractor.
 Returns:
-  - slice of structures with information about labels
+  - slice of structures with information about miners.
 */
 func (ego *Extractor) Meta() []DlSymbol {
 
@@ -261,8 +261,8 @@ func (ego *Extractor) Meta() []DlSymbol {
 /*
 Gives the next batch of found entities.
 Returns:
-  - slice of found occurrences
-  - error, if any occurred
+  - slice of found occurrences,
+  - error, if any occurred.
 */
 func (ego *Extractor) Next() ([]Occurrence, error) {
 

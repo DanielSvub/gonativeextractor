@@ -54,7 +54,7 @@ func (ego *FileStream) Check() bool {
 }
 
 /*
-NewFileStream returns a pointer to created file stream from file.
+Creates a new FileStream.
 Parameters:
   - path - path to a file.
 Returns:

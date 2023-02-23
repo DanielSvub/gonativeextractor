@@ -41,6 +41,9 @@ type DlSymbol struct {
 	Ldptr unsafe.Pointer
 }
 
+/*
+Constants for valid NativeExtractor flags.
+*/
 const (
 	// Disables enclosed occurrence feature.
 	E_NO_ENCLOSED_OCCURRENCES = 1 << 0
@@ -48,7 +51,9 @@ const (
 	E_SORT_RESULTS = 1 << 1
 )
 
-/* Default path to .so libs representing miners. */
+/*
+Default path to .so libs representing miners.
+*/
 const DEFAULT_MINERS_PATH = "/usr/lib/nativeextractor_miners"
 
 /*
@@ -123,7 +128,7 @@ func (ego *Extractor) SetStream(stream Streamer) error {
 }
 
 /*
-Unsets the stream attached to the Extractor.
+Dettaches the stream from the Extractor.
 */
 func (ego *Extractor) UnsetStream() {
 	C.extractor_c_unset_stream(ego.extractor)
@@ -131,9 +136,9 @@ func (ego *Extractor) UnsetStream() {
 }
 
 /*
-Set NativeExtractor flags.
+Sets NativeExtractor flags.
 Parameters:
-  - flags - valid flags are E_NO_ENCLOSED_OCCURRENCES, E_SORT_RESULTS.
+  - flags - use constants defined above.
 Returns:
   - error if any occurred, nil otherwise.
 */
@@ -147,9 +152,9 @@ func (ego *Extractor) SetFlags(flags uint32) error {
 }
 
 /*
-Unsets flags.
+Unsets NativeExtractor flags.
 Parameters:
-  - flags - valid flags are E_NO_ENCLOSED_OCCURRENCES, E_SORT_RESULTS.
+  - flags - use constants defined above.
 Returns:
   - error if any occurred, nil otherwise.
 */
@@ -198,9 +203,9 @@ func (ego *Extractor) GetLastError() error {
 }
 
 /*
-Checks if the attached stream ended.
+Checks if the stream attached to the Extractor ended.
 Returns:
-  - true if stream ended or no stream set, false otherwise.
+  - true if there is nothing to read (stream ended or no stream set), false otherwise.
 */
 func (ego *Extractor) Eof() bool {
 	if ego.stream == nil {

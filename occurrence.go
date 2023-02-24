@@ -8,12 +8,22 @@ package gonativeextractor
 #include <nativeextractor/extractor.h>
 */
 import "C"
-import "unsafe"
+import (
+	"math/bits"
+	"unsafe"
+)
 
 /*
-Interface representing one found occurrence.
+Size of pointer in bytes.
+*/
+const POINTER_SIZE = bits.UintSize / 8
+
+/*
+Interface alowing an access to the found occurrence.
 */
 type Occurrencer interface {
+	Next()
+	Eof() bool
 	Str() string
 	Pos() uint64
 	Upos() uint64
@@ -24,10 +34,37 @@ type Occurrencer interface {
 }
 
 /*
-Struct implementing Occurrencer, contains a pointer to C struct.
+Struct implementing Occurrencer, contains a pointer to the current occurrence (C struct).
 */
 type Occurrence struct {
-	ptr *C.struct_occurrence_t
+	ptr **C.struct_occurrence_t
+}
+
+/*
+Moves the pointer to the next occurrence. If EOF, does nothing.
+*/
+func (ego *Occurrence) Next() {
+	if !ego.Eof() {
+		ego.ptr = (**C.struct_occurrence_t)(unsafe.Add(unsafe.Pointer(ego.ptr), POINTER_SIZE))
+	}
+}
+
+/*
+Checks if all occurrences have been read.
+Returns:
+  - true if there is nothing to read (current pointer is nil), false otherwise.
+*/
+func (ego *Occurrence) Eof() bool {
+	return *ego.ptr == nil
+}
+
+/*
+Private method, causes panic when EOF.
+*/
+func (ego *Occurrence) check() {
+	if ego.Eof() {
+		panic("Attempt to access a nil pointer.")
+	}
 }
 
 /*
@@ -36,7 +73,8 @@ Returns:
   - found occurrence.
 */
 func (ego *Occurrence) Str() string {
-	cstr := C.strndup(ego.ptr.str, C.size_t(ego.ptr.len))
+	ego.check()
+	cstr := C.strndup((*ego.ptr).str, C.size_t((*ego.ptr).len))
 	retVal := C.GoString(cstr)
 	C.free(unsafe.Pointer(cstr))
 	return retVal
@@ -48,7 +86,8 @@ Returns:
   - position of the found occurrence (in bytes).
 */
 func (ego *Occurrence) Pos() uint64 {
-	return uint64(ego.ptr.pos)
+	ego.check()
+	return uint64((*ego.ptr).pos)
 }
 
 /*
@@ -57,7 +96,8 @@ Returns:
   - position of the found occurrence (in unicode characters).
 */
 func (ego *Occurrence) Upos() uint64 {
-	return uint64(ego.ptr.upos)
+	ego.check()
+	return uint64((*ego.ptr).upos)
 }
 
 /*
@@ -66,7 +106,8 @@ Returns:
   - length of the found occurrence (in bytes).
 */
 func (ego *Occurrence) Len() uint32 {
-	return uint32(ego.ptr.len)
+	ego.check()
+	return uint32((*ego.ptr).len)
 }
 
 /*
@@ -75,7 +116,8 @@ Returns:
   - length of the found occurrence (in unicode characters).
 */
 func (ego *Occurrence) Ulen() uint32 {
-	return uint32(ego.ptr.ulen)
+	ego.check()
+	return uint32((*ego.ptr).ulen)
 }
 
 /*
@@ -84,7 +126,8 @@ Returns:
   - label of the found entity.
 */
 func (ego *Occurrence) Label() string {
-	return C.GoString(ego.ptr.label)
+	ego.check()
+	return C.GoString((*ego.ptr).label)
 }
 
 /*
@@ -93,5 +136,6 @@ Returns:
   - probability of the occurrence.
 */
 func (ego *Occurrence) Prob() float64 {
-	return float64(ego.ptr.prob)
+	ego.check()
+	return float64((*ego.ptr).prob)
 }

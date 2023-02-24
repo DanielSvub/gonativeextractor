@@ -47,29 +47,33 @@ func TestExtractor(t *testing.T) {
 			if err != nil {
 				t.Fatal(err.Error())
 			}
-			if len(r) != 1 {
-				t.Fatal("Should find exactly one occurrence.")
+			if r.Eof() {
+				t.Fatal("Should find an occurrence.")
 			}
-			if r[0].Str() != "world" {
+			if r.Str() != "world" {
 				t.Error("Str should be 'world'.")
 			}
-			if r[0].Pos() != 6 {
+			if r.Pos() != 6 {
 				t.Error("Pos should be 6.")
 			}
-			if r[0].Upos() != 6 {
+			if r.Upos() != 6 {
 				t.Error("Upos should be 6.")
 			}
-			if r[0].Len() != 5 {
+			if r.Len() != 5 {
 				t.Error("Len should be 5.")
 			}
-			if r[0].Ulen() != 5 {
+			if r.Ulen() != 5 {
 				t.Error("Ulen should be 5.")
 			}
-			if r[0].Label() != "Glob" {
+			if r.Label() != "Glob" {
 				t.Error("Label should be 'Glob'.")
 			}
-			if r[0].Prob() != 1 {
+			if r.Prob() != 1 {
 				t.Error("Prob should be 1.")
+			}
+			r.Next()
+			if !r.Eof() {
+				t.Error("Should find only one occurrence.")
 			}
 		}
 

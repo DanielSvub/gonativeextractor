@@ -251,24 +251,17 @@ func (ego *Extractor) Meta() []DlSymbol {
 /*
 Gives the next batch of found entities.
 Returns:
-  - slice of found occurrences,
+  - the first found occurrence,
   - error, if any occurred.
 */
-func (ego *Extractor) Next() ([]Occurrencer, error) {
+func (ego *Extractor) Next() (Occurrencer, error) {
 
 	if ego.stream == nil {
 		return nil, fmt.Errorf("Stream is not set.")
 	}
 
-	step := bits.UintSize / 8
-	occurrences := C.next(ego.extractor, C.uint(ego.batch))
-	result := make([]Occurrencer, 0)
+	result := C.next(ego.extractor, C.uint(ego.batch))
 
-	// Iterating over null terminated array of pointers (size of pointer added to address in each iteration)
-	for occ := occurrences; *occ != nil; occ = (**C.struct_occurrence_t)(unsafe.Add(unsafe.Pointer(occ), step)) {
-		result = append(result, &Occurrence{*occ})
-	}
-
-	return result, nil
+	return &Occurrence{result}, nil
 
 }

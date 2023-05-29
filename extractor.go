@@ -105,9 +105,19 @@ func (ego *Extractor) Destroy() error {
 	if ego.extractor == nil {
 		return fmt.Errorf("Extractor has been already closed.")
 	}
+
+	if ego.stream != nil {
+		err := ego.stream.Close()
+		ego.stream = nil
+		if err != nil {
+			return err
+		}
+	}
+
 	C.extractor_c_destroy(ego.extractor)
 	C.free(unsafe.Pointer(ego.extractor))
 	ego.extractor = nil
+
 	return nil
 }
 

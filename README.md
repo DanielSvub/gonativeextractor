@@ -103,7 +103,6 @@ From one occurrence you can get the following:
 ```go
 for !e.Eof() {
     r, err := e.Next()
-    // Q: Ma byt v readme err != nil ??
     if err != nil {
        return err
     }

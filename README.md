@@ -8,6 +8,7 @@ This is official Golang binding for the [NativeExtractor](https://github.com/Spo
 * Golang,
 * [NativeExtractor](https://github.com/SpongeData-cz/nativeextractor) installation.
 
+
 # Usage
 ## Creating a Extractor
 The following parameters are required to create an Extractor:
@@ -143,9 +144,6 @@ In the end, it is necessary to destroy the Extractor with *Destroy*. This functi
 err = e.Destroy() 
 ```
 
-NAH
-If you want to explicitly call the *UnsetStream* function, you must first keep a reference to the stream.
-
 
 If we explicitly want to call the *UnsetStream* function, the *Close* function must be called before.
 
@@ -155,5 +153,3 @@ err = st.Close()
 ```go
 e.UnsetStream()
 ```
-
-<!-- Stream je potreba zavrit pred unsetnutim -->

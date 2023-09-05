@@ -37,6 +37,7 @@ type FileStream struct {
 
 /*
 Gets the inner stream structure.
+
 Returns:
   - pointer to the C struct stream_c.
 */
@@ -46,6 +47,7 @@ func (ego *FileStream) GetStream() *C.struct_stream_c {
 
 /*
 Checks if an error occurred in a FileStream.
+
 Returns:
   - true if an error occurred, false otherwise.
 */
@@ -55,19 +57,22 @@ func (ego *FileStream) Check() bool {
 
 /*
 Creates a new FileStream.
+
 Parameters:
   - path - path to a file.
+
 Returns:
   - pointer to a new instance of FileStream.
+  - error if any occurred, nil otherwise.
 */
 func NewFileStream(path string) (*FileStream, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil, fmt.Errorf("File does not exist.")
+		return nil, fmt.Errorf("file does not exist")
 	}
 	out := FileStream{Path: path}
 	out.Ptr = C.stream_file_c_new(C.CString(path))
 	if !out.Check() {
-		return nil, fmt.Errorf("Unable to create FileStream.")
+		return nil, fmt.Errorf("unable to create FileStream")
 	}
 
 	return &out, nil
@@ -75,12 +80,13 @@ func NewFileStream(path string) (*FileStream, error) {
 
 /*
 Closes a FileStream.
+
 Returns:
   - error if the stream has been already closed, nil otherwise.
 */
 func (ego *FileStream) Close() error {
 	if ego.Ptr == nil {
-		return fmt.Errorf("FileStream has been already closed.")
+		return fmt.Errorf("fileStream has been already closed")
 	}
 	C.stream_c_destroy(&ego.Ptr.stream)
 	C.free(unsafe.Pointer(ego.Ptr))
@@ -99,25 +105,29 @@ type BufferStream struct {
 
 /*
 Creates a new BufferStream.
+
 Parameters:
   - buffer - byte array for stream initialization (has to be terminated with \x00).
+
 Returns:
   - pointer to a new instance of BufferStream.
+  - error if any occurred, nil otherwise.
 */
 func NewBufferStream(buffer []byte) (*BufferStream, error) {
 	if buffer == nil {
-		return nil, fmt.Errorf("Nil buffer given.")
+		return nil, fmt.Errorf("nil buffer given")
 	}
 	out := BufferStream{Buffer: buffer}
 	out.Ptr = C.stream_buffer_c_new((*C.uchar)(&buffer[0]), C.ulong(len(buffer)))
 	if !out.Check() {
-		return nil, fmt.Errorf("Unable to create BufferStream.")
+		return nil, fmt.Errorf("unable to create BufferStream")
 	}
 	return &out, nil
 }
 
 /*
 Gets the inner stream structure.
+
 Returns:
   - pointer to the C struct stream_c.
 */
@@ -127,6 +137,7 @@ func (ego *BufferStream) GetStream() *C.struct_stream_c {
 
 /*
 Checks if an error occurred in a BufferStream.
+
 Returns:
   - true if an error occurred, false otherwise.
 */
@@ -136,12 +147,13 @@ func (ego *BufferStream) Check() bool {
 
 /*
 Closes a BufferStream.
+
 Returns:
   - error if the stream has been already closed, nil otherwise.
 */
 func (ego *BufferStream) Close() error {
 	if ego.Ptr == nil {
-		return fmt.Errorf("BufferStream has been already closed.")
+		return fmt.Errorf("bufferStream has been already closed")
 	}
 	C.stream_c_destroy(&ego.Ptr.stream)
 	C.free(unsafe.Pointer(ego.Ptr))

@@ -51,6 +51,7 @@ func (ego *Occurrence) Next() {
 
 /*
 Checks if all occurrences have been read.
+
 Returns:
   - true if there is nothing to read (current pointer is nil), false otherwise.
 */
@@ -69,6 +70,7 @@ func (ego *Occurrence) check() {
 
 /*
 Creates a string containing found occurrence.
+
 Returns:
   - found occurrence.
 */
@@ -82,6 +84,7 @@ func (ego *Occurrence) Str() string {
 
 /*
 Casts position of the found occurrence to Go integer type.
+
 Returns:
   - position of the found occurrence (in bytes).
 */
@@ -92,6 +95,7 @@ func (ego *Occurrence) Pos() uint64 {
 
 /*
 Casts UTF position of the found occurrence to Go integer type.
+
 Returns:
   - position of the found occurrence (in unicode characters).
 */
@@ -102,6 +106,7 @@ func (ego *Occurrence) Upos() uint64 {
 
 /*
 Casts length of the found occurrence to Go integer type.
+
 Returns:
   - length of the found occurrence (in bytes).
 */
@@ -112,6 +117,7 @@ func (ego *Occurrence) Len() uint32 {
 
 /*
 Casts UTF length of the found occurrence to Go integer type.
+
 Returns:
   - length of the found occurrence (in unicode characters).
 */
@@ -122,6 +128,7 @@ func (ego *Occurrence) Ulen() uint32 {
 
 /*
 Casts label of the found occurrence to Go string.
+
 Returns:
   - label of the found entity.
 */
@@ -132,6 +139,7 @@ func (ego *Occurrence) Label() string {
 
 /*
 Casts probability of the found occurrence to Go float type.
+
 Returns:
   - probability of the occurrence.
 */

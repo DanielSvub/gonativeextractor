@@ -70,11 +70,14 @@ type Extractor struct {
 
 /*
 Creates a new Extractor. Has to be deallocated with 'Destroy' method after use.
+
 Parameters:
   - batch - number of logical symbols to be analyzed in the stream (if negative, defaults to 2^16),
   - threads - number of threads for miners to run on (if negative, defaults to maximum threads available),
   - flags - initial flags.
-Returns: pointer to a new instance of Extractor.
+
+Returns:
+  - pointer to a new instance of Extractor.
 */
 func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 	out := Extractor{}
@@ -99,11 +102,13 @@ func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 
 /*
 Destroys the Extractor.
-Returns: error if the extractor has been already closed, nil otherwise.
+
+Returns:
+  - error if the extractor has been already closed, nil otherwise.
 */
 func (ego *Extractor) Destroy() error {
 	if ego.extractor == nil {
-		return fmt.Errorf("Extractor has been already closed.")
+		return fmt.Errorf("Extractor has been already closed")
 	}
 
 	if ego.stream != nil {
@@ -123,15 +128,17 @@ func (ego *Extractor) Destroy() error {
 
 /*
 Sets a stream to the Extractor.
+
 Parameters:
   - stream - an instance of Streamer interface.
+
 Returns:
   - error if any occurred, nil otherwise.
 */
 func (ego *Extractor) SetStream(stream Streamer) error {
 	ok := C.extractor_c_set_stream(ego.extractor, stream.GetStream())
 	if !ok {
-		return fmt.Errorf("Unable to set stream.")
+		return fmt.Errorf("unable to set stream")
 	}
 	ego.stream = stream
 	return nil
@@ -147,15 +154,17 @@ func (ego *Extractor) UnsetStream() {
 
 /*
 Sets NativeExtractor flags.
+
 Parameters:
   - flags - use constants defined above.
+
 Returns:
   - error if any occurred, nil otherwise.
 */
 func (ego *Extractor) SetFlags(flags uint32) error {
 	ok := C.extractor_set_flags(ego.extractor, C.uint(flags))
 	if !ok {
-		return fmt.Errorf("Unable to set flags.")
+		return fmt.Errorf("unable to set flags")
 	}
 	ego.flags = flags
 	return nil
@@ -163,15 +172,17 @@ func (ego *Extractor) SetFlags(flags uint32) error {
 
 /*
 Unsets NativeExtractor flags.
+
 Parameters:
   - flags - use constants defined above.
+
 Returns:
   - error if any occurred, nil otherwise.
 */
 func (ego *Extractor) UnsetFlags(flags uint32) error {
 	ok := C.extractor_unset_flags(ego.extractor, C.uint(flags))
 	if !ok {
-		return fmt.Errorf("Unable to unset flags.")
+		return fmt.Errorf("unable to unset flags")
 	}
 	ego.flags = uint32(ego.extractor.flags)
 	return nil
@@ -179,10 +190,14 @@ func (ego *Extractor) UnsetFlags(flags uint32) error {
 
 /*
 Loads a Miner from a Shared Object (.so library).
+
 Parameters:
   - sodir - a path to the shared object,
   - symbol - shared object symbol,
   - params - optional (may be empty array or nil, but if present, has to be terminated with \x00).
+
+Returns:
+  - error if any occurred, nil otherwise.
 */
 func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) error {
 	var data unsafe.Pointer
@@ -201,6 +216,7 @@ func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) err
 
 /*
 Gives the last error which occurred in Extractor.
+
 Returns:
   - error, nil if no error occurred.
 */
@@ -214,6 +230,7 @@ func (ego *Extractor) GetLastError() error {
 
 /*
 Checks if the stream attached to the Extractor ended.
+
 Returns:
   - true if there is nothing to read (stream ended or no stream set), false otherwise.
 */
@@ -226,6 +243,7 @@ func (ego *Extractor) Eof() bool {
 
 /*
 Gives the meta information about Extractor.
+
 Returns:
   - slice of structures with information about miners.
 */
@@ -260,6 +278,7 @@ func (ego *Extractor) Meta() []DlSymbol {
 
 /*
 Gives the next batch of found entities.
+
 Returns:
   - the first found occurrence,
   - error, if any occurred.
@@ -267,7 +286,7 @@ Returns:
 func (ego *Extractor) Next() (Occurrencer, error) {
 
 	if ego.stream == nil {
-		return nil, fmt.Errorf("Stream is not set.")
+		return nil, fmt.Errorf("stream is not set")
 	}
 
 	result := C.next(ego.extractor, C.uint(ego.batch))

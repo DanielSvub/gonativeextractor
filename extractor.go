@@ -211,11 +211,11 @@ func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) err
 	}
 
 	mutex.Lock()
+	defer mutex.Unlock()
 
 	if C.extractor_c_add_miner_from_so(ego.extractor, C.CString(sodir), C.CString(symbol), data) {
 		return nil
 	}
-	mutex.Unlock()
 
 	return fmt.Errorf(C.GoString(C.extractor_get_last_error(ego.extractor)))
 }

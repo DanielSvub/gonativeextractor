@@ -22,8 +22,11 @@ import (
 	"fmt"
 	"math/bits"
 	"runtime"
+	"sync"
 	"unsafe"
 )
+
+var mutex sync.Mutex
 
 /*
 Structure with information about a miner.
@@ -207,9 +210,12 @@ func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) err
 		data = unsafe.Pointer(&params[0])
 	}
 
+	mutex.Lock()
+
 	if C.extractor_c_add_miner_from_so(ego.extractor, C.CString(sodir), C.CString(symbol), data) {
 		return nil
 	}
+	mutex.Unlock()
 
 	return fmt.Errorf(C.GoString(C.extractor_get_last_error(ego.extractor)))
 }

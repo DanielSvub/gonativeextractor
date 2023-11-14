@@ -242,8 +242,12 @@ func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) err
 	} else {
 		data = unsafe.Pointer(&params[0])
 	}
+	fName := C.CString("extractor_c_add_miner_from_so")
+	defer C.free(unsafe.Pointer(fName))
+	fPtr := C.dlsym(ego.dlHandler, fName)
+	extractorAdded := C.extractor_c_add_miner_from_so_bridge(fPtr, ego.extractor, C.CString(sodir), C.CString(symbol), data)
 
-	if C.extractor_c_add_miner_from_so(ego.extractor, C.CString(sodir), C.CString(symbol), data) {
+	if extractorAdded { //C.extractor_c_add_miner_from_so(ego.extractor, C.CString(sodir), C.CString(symbol), data) {
 		return nil
 	}
 

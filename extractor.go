@@ -249,6 +249,7 @@ func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) err
 	extractorAdded := C.extractor_c_add_miner_from_so_bridge(fPtr, ego.extractor, C.CString(sodir), C.CString(symbol), data)
 
 	if extractorAdded { //C.extractor_c_add_miner_from_so(ego.extractor, C.CString(sodir), C.CString(symbol), data) {
+		fmt.Println("OK")
 		return nil
 	}
 

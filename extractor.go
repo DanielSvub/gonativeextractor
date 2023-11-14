@@ -242,6 +242,7 @@ func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) err
 	} else {
 		data = unsafe.Pointer(&params[0])
 	}
+	fmt.Println("Loading miner: ", sodir, symbol)
 	fName := C.CString("extractor_c_add_miner_from_so")
 	defer C.free(unsafe.Pointer(fName))
 	fPtr := C.dlsym(ego.dlHandler, fName)

@@ -1,21 +1,41 @@
 package gonativeextractor
 
 /*
-#cgo CFLAGS: -I/usr/include/nativeextractor
-#cgo LDFLAGS: -lnativeextractor -lglib-2.0 -ldl
-#include <string.h>
-#include <nativeextractor/common.h>
-#include <nativeextractor/extractor.h>
-#include <nativeextractor/stream.h>
-bool extractor_c_add_miner_from_so(extractor_c * self, const char * miner_so_path, const char * miner_name, void * params );
-const char * extractor_get_last_error(extractor_c * self);
-void extractor_c_destroy(extractor_c * self);
-bool extractor_c_set_stream(extractor_c * self, stream_c * stream);
-void extractor_c_unset_stream(extractor_c * self);
-bool extractor_set_flags(extractor_c * self, unsigned flags);
-bool extractor_unset_flags(extractor_c * self, unsigned flags);
-occurrence_t** next(extractor_c * self, unsigned batch);
-const char * extractor_get_last_error(extractor_c * self);
+   #cgo CFLAGS: -I/usr/include/nativeextractor
+   #cgo LDFLAGS:  -lglib-2.0 -ldl
+   #include <dlfcn.h>
+   #include <string.h>
+   #include <nativeextractor/common.h>
+   #include <nativeextractor/extractor.h>
+   #include <nativeextractor/stream.h>
+   bool extractor_c_add_miner_from_so(extractor_c * self, const char * miner_so_path, const char * miner_name, void * params );
+   const char * extractor_get_last_error(extractor_c * self);
+   void extractor_c_destroy(extractor_c * self);
+   bool extractor_c_set_stream(extractor_c * self, stream_c * stream);
+   void extractor_c_unset_stream(extractor_c * self);
+   bool extractor_set_flags(extractor_c * self, unsigned flags);
+   bool extractor_unset_flags(extractor_c * self, unsigned flags);
+   occurrence_t** next(extractor_c * self, unsigned batch);
+   const char * extractor_get_last_error(extractor_c * self);
+
+   bool extractor_c_add_miner_from_so_bridge(void *f, void *self, const char * miner_so_path, const char * miner_name, void * params)
+   {
+     return ((bool (*)(extractor_c *, const char *, const char *, void* ))f)(self, miner_so_path, miner_name, params);
+   }
+   const char * extractor_get_last_error_bridge(void * f, extractor_c * self)
+   {
+     return ((const char * (*)(extractor_c *))f)(self);
+   }
+
+   extractor_c * extractor_c_new_bridge(void * f, int threads, miner_c ** miners)
+   {
+     return ((extractor_c * (*)(int, miner_c **))f)(threads, miners);
+   }
+
+
+
+
+
 */
 import "C"
 import (
@@ -52,6 +72,11 @@ const (
 )
 
 /*
+Default path to libnativeextractor.so.
+*/
+const DEFAULT_NATIVEEXTRACOTR_PATH = "/usr/lib/"
+
+/*
 Default path to .so libs representing miners.
 */
 const DEFAULT_MINERS_PATH = "/usr/lib/nativeextractor_miners"
@@ -66,6 +91,7 @@ type Extractor struct {
 	flags     uint32
 	threads   int
 	extractor *C.struct_extractor_c
+	dlHandler unsafe.Pointer
 }
 
 /*
@@ -95,7 +121,16 @@ func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 
 	miner := &C.struct_miner_c{}
 	miners := (**C.struct_miner_c)(C.calloc(1, C.ulong(unsafe.Sizeof(&miner))))
-	out.extractor = C.extractor_c_new(C.int(out.threads), miners)
+	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "libnativextractor.so")
+	defer C.free(unsafe.Pointer(nativeextractorpath))
+	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_LAZY)
+	if out.dlHandler == nil {
+		panic("Can not dlopen libnativextractor.so")
+	}
+	fName := C.CString("extractor_c_new")
+	defer C.free(unsafe.Pointer(fName))
+	fPtr := C.dlsym(out.dlHandler, fName)
+	out.extractor = C.extractor_c_new_bridge(fPtr, C.int(out.threads), miners) // C.extractor_c_new(C.int(out.threads), miners)
 
 	return &out
 }
@@ -118,6 +153,7 @@ func (ego *Extractor) Destroy() error {
 			return err
 		}
 	}
+	C.dlclose(ego.dlHandler)
 
 	C.extractor_c_destroy(ego.extractor)
 	C.free(unsafe.Pointer(ego.extractor))

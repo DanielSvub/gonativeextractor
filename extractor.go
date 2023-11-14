@@ -18,7 +18,7 @@ package gonativeextractor
    occurrence_t** next(extractor_c * self, unsigned batch);
    const char * extractor_get_last_error(extractor_c * self);
 
-   bool extractor_c_add_miner_from_so_bridge(void *f, void *self, const char * miner_so_path, const char * miner_name, void * params)
+   bool extractor_c_add_miner_from_so_bridge(void *f, extractor_c * self, const char * miner_so_path, const char * miner_name, void * params)
    {
      return ((bool (*)(extractor_c *, const char *, const char *, void* ))f)(self, miner_so_path, miner_name, params);
    }

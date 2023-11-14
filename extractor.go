@@ -121,7 +121,7 @@ func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 
 	miner := &C.struct_miner_c{}
 	miners := (**C.struct_miner_c)(C.calloc(1, C.ulong(unsafe.Sizeof(&miner))))
-	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "libnativeextractor.so")
+	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
 	defer C.free(unsafe.Pointer(nativeextractorpath))
 	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_LAZY)
 	if out.dlHandler == nil {

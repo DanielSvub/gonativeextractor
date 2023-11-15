@@ -100,7 +100,7 @@ func (ego *FileStream) Close() error {
 
 	fName := C.CString("stream_c_destroy")
 	defer C.free(unsafe.Pointer(fName))
-	fPtr := C.dlsym(out.dlHandler, fName)
+	fPtr := C.dlsym(ego.dlHandler, fName)
 	C.stream_c_destroy_bridge(fPtr, &ego.Ptr.stream) //C.stream_c_destroy(&ego.Ptr.stream)
 	C.free(unsafe.Pointer(ego.Ptr))
 	ego.Ptr = nil
@@ -181,7 +181,7 @@ func (ego *BufferStream) Close() error {
 	}
 	fName := C.CString("stream_c_destroy")
 	defer C.free(unsafe.Pointer(fName))
-	fPtr := C.dlsym(out.dlHandler, fName)
+	fPtr := C.dlsym(ego.dlHandler, fName)
 	C.stream_c_destroy_bridge(fPtr, &ego.Ptr.stream)
 	//	C.stream_c_destroy(&ego.Ptr.stream)
 	C.free(unsafe.Pointer(ego.Ptr))

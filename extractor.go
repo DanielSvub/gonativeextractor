@@ -265,7 +265,7 @@ Returns:
 func (ego *Extractor) GetLastError() error {
 	fName := C.CString("extractor_get_last_error")
 	defer C.free(unsafe.Pointer(fName))
-	fPtr = C.dlsym(ego.dlHandler, fName)
+	fPtr := C.dlsym(ego.dlHandler, fName)
 
 	err := C.GoString(C.extractor_get_last_error_bridge(fPtr, ego.extractor))
 	//	err := C.GoString(C.extractor_get_last_error(ego.extractor))

@@ -21,6 +21,7 @@ package gonativeextractor
    {
      return ((bool (*)(extractor_c *, const char *, const char *, void* ))f)(self, miner_so_path, miner_name, params);
    }
+
    const char * extractor_get_last_error_bridge(void * f, extractor_c * self)
    {
      return ((const char * (*)(extractor_c *))f)(self);
@@ -252,8 +253,7 @@ func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) err
 		//	fmt.Println("OK")
 		return nil
 	}
-
-	return fmt.Errorf(C.GoString(C.extractor_get_last_error(ego.extractor)))
+	return ego.GetLastError()
 }
 
 /*
@@ -263,7 +263,12 @@ Returns:
   - error, nil if no error occurred.
 */
 func (ego *Extractor) GetLastError() error {
-	err := C.GoString(C.extractor_get_last_error(ego.extractor))
+	fName := C.CString("extractor_get_last_error")
+	defer C.free(unsafe.Pointer(fName))
+	fPtr = C.dlsym(ego.dlHandler, fName)
+
+	err := C.GoString(C.extractor_get_last_error_bridge(fPtr, ego.extractor))
+	//	err := C.GoString(C.extractor_get_last_error(ego.extractor))
 	if err == "" {
 		return nil
 	}

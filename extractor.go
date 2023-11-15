@@ -79,7 +79,7 @@ const (
 /*
 Default path to libnativeextractor.so.
 */
-const DEFAULT_NATIVEEXTRACOTR_PATH = "."
+const DEFAULT_NATIVEEXTRACOTR_PATH = "/usr/lib"
 
 /*
 Default path to .so libs representing miners.
@@ -129,7 +129,7 @@ func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
 	defer C.free(unsafe.Pointer(nativeextractorpath))
 	fmt.Println("Dlopening nativeextractor")
-	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_NOW|C.RTLD_GLOBAL)
+	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_LAZY)
 	if out.dlHandler == nil {
 		panic("Can not dlopen libnativeextractor.so")
 	}

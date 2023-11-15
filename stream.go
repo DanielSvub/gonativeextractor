@@ -2,11 +2,12 @@ package gonativeextractor
 
 /*
    #cgo LDFLAGS: -lglib-2.0 -ldl
+   #include <dlfcn.h>
    #include <nativeextractor/common.h>
    #include <nativeextractor/stream.h>
     void stream_c_destroy_bridge(void * f, stream_c * self)
    {
-      return ((void (*)(extractor_c *))f)(self);
+      return ((void (*)(stream_c *))f)(self);
    }
 */
 import "C"

@@ -89,7 +89,7 @@ func NewFileStream(path string) (*FileStream, error) {
 	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
 	defer C.free(unsafe.Pointer(nativeextractorpath))
 	fmt.Println("Dlopening nativeextractor")
-	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_LAZY)
+	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_NODELETE|C.RTLD_LAZY)
 	if out.dlHandler == nil {
 		panic("Can not dlopen libnativeextractor.so")
 	}
@@ -157,7 +157,7 @@ func NewBufferStream(buffer []byte) (*BufferStream, error) {
 	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
 	defer C.free(unsafe.Pointer(nativeextractorpath))
 	fmt.Println("Dlopening nativeextractor")
-	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_LAZY)
+	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_NODELETE|C.RTLD_LAZY)
 	if out.dlHandler == nil {
 		panic("Can not dlopen libnativeextractor.so")
 	}

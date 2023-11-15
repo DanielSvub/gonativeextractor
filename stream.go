@@ -5,10 +5,24 @@ package gonativeextractor
    #include <dlfcn.h>
    #include <nativeextractor/common.h>
    #include <nativeextractor/stream.h>
-    void stream_c_destroy_bridge(void * f, stream_c * self)
+
+   void stream_c_destroy_bridge(void * f, stream_c * self)
    {
       return ((void (*)(stream_c *))f)(self);
    }
+
+   stream_buffer_c * stream_buffer_c_new_bridge(void * f, unsigned char * buffer, unsigned long length)
+   {
+      return ((stream_buffer_c * (*) (unsigned char *, unsigned long))f)(buffer, length);
+   }
+
+
+   stream_file_c * stream_file_c_new_bridge(void * f, string path)
+   {
+      return ((stream_file_c * (*) (string))f)( path);
+   }
+
+
 */
 import "C"
 import (
@@ -71,10 +85,6 @@ func NewFileStream(path string) (*FileStream, error) {
 		return nil, fmt.Errorf("file does not exist")
 	}
 	out := FileStream{Path: path}
-	out.Ptr = C.stream_file_c_new(C.CString(path))
-	if !out.Check() {
-		return nil, fmt.Errorf("unable to create FileStream")
-	}
 
 	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
 	defer C.free(unsafe.Pointer(nativeextractorpath))
@@ -82,6 +92,16 @@ func NewFileStream(path string) (*FileStream, error) {
 	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_LAZY)
 	if out.dlHandler == nil {
 		panic("Can not dlopen libnativeextractor.so")
+	}
+
+	fName := C.CString("stream_file_c_new")
+	defer C.free(unsafe.Pointer(fName))
+	fPtr := C.dlsym(ego.dlHandler, fName)
+	filePath := C.CString(path)
+	defer C.free(unsafe.Pointer(filePath))
+	out.Ptr = C.stream_file_c_new_bridge(fPtr, filePath) //C.stream_file_c_new(C.CString(path))
+	if !out.Check() {
+		return nil, fmt.Errorf("unable to create FileStream")
 	}
 
 	return &out, nil
@@ -133,10 +153,6 @@ func NewBufferStream(buffer []byte) (*BufferStream, error) {
 		return nil, fmt.Errorf("nil buffer given")
 	}
 	out := BufferStream{Buffer: buffer}
-	out.Ptr = C.stream_buffer_c_new((*C.uchar)(&buffer[0]), C.ulong(len(buffer)))
-	if !out.Check() {
-		return nil, fmt.Errorf("unable to create BufferStream")
-	}
 
 	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
 	defer C.free(unsafe.Pointer(nativeextractorpath))
@@ -144,6 +160,16 @@ func NewBufferStream(buffer []byte) (*BufferStream, error) {
 	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_LAZY)
 	if out.dlHandler == nil {
 		panic("Can not dlopen libnativeextractor.so")
+	}
+
+	fName := C.CString("stream_buffer_c_new")
+	defer C.free(unsafe.Pointer(fName))
+	fPtr := C.dlsym(ego.dlHandler, fName)
+	filePath := C.CString(path)
+	defer C.free(unsafe.Pointer(filePath))
+	out.Ptr = C.stream_buffer_c_new_bridge(fPtr, filePath) //C.stream_buffer_c_new((*C.uchar)(&buffer[0]), C.ulong(len(buffer)))
+	if !out.Check() {
+		return nil, fmt.Errorf("unable to create BufferStream")
 	}
 
 	return &out, nil

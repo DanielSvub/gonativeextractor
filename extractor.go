@@ -1,13 +1,13 @@
 package gonativeextractor
 
 /*
-   #cgo CFLAGS: -I/usr/include/nativeextractor
+   //#cgo CFLAGS: -I/usr/include/nativeextractor
    #cgo LDFLAGS:  -lglib-2.0 -ldl
    #include <dlfcn.h>
    #include <string.h>
- //  #include <nativeextractor/common.h>
+   #include <nativeextractor/common.h>
    #include <nativeextractor/extractor.h>
-  // #include <nativeextractor/stream.h>
+   #include <nativeextractor/stream.h>
 
    void extractor_c_destroy(extractor_c * self);
    bool extractor_c_set_stream(extractor_c * self, stream_c * stream);

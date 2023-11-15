@@ -126,10 +126,9 @@ func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 
 	miner := &C.struct_miner_c{}
 	miners := (**C.struct_miner_c)(C.calloc(1, C.ulong(unsafe.Sizeof(&miner))))
-	fmt.Println("Dlopening: ", DEFAULT_NATIVEEXTRACOTR_PATH+"/libnativeextractor.so")
 	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
 	defer C.free(unsafe.Pointer(nativeextractorpath))
-	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_NODELETE|C.RTLD_LAZY)
+	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_GLOBAL|C.RTLD_LAZY)
 	if out.dlHandler == nil {
 		panic("Can not dlopen libnativeextractor.so")
 	}

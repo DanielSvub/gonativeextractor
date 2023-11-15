@@ -5,7 +5,7 @@ package gonativeextractor
    #include <dlfcn.h>
    #include <string.h>
    #include <nativeextractor/common.h>
-   //#include <nativeextractor/extractor.h>
+   #include <nativeextractor/extractor.h>
    #include <nativeextractor/stream.h>
 
    void cleanup_fun_bridge(void * f, extractor_c * self)

@@ -96,7 +96,7 @@ func NewFileStream(path string) (*FileStream, error) {
 
 	fName := C.CString("stream_file_c_new")
 	defer C.free(unsafe.Pointer(fName))
-	fPtr := C.dlsym(ego.dlHandler, fName)
+	fPtr := C.dlsym(out.dlHandler, fName)
 	filePath := C.CString(path)
 	defer C.free(unsafe.Pointer(filePath))
 	out.Ptr = C.stream_file_c_new_bridge(fPtr, filePath) //C.stream_file_c_new(C.CString(path))
@@ -164,10 +164,8 @@ func NewBufferStream(buffer []byte) (*BufferStream, error) {
 
 	fName := C.CString("stream_buffer_c_new")
 	defer C.free(unsafe.Pointer(fName))
-	fPtr := C.dlsym(ego.dlHandler, fName)
-	filePath := C.CString(path)
-	defer C.free(unsafe.Pointer(filePath))
-	out.Ptr = C.stream_buffer_c_new_bridge(fPtr, filePath) //C.stream_buffer_c_new((*C.uchar)(&buffer[0]), C.ulong(len(buffer)))
+	fPtr := C.dlsym(out.dlHandler, fName)
+	out.Ptr = C.stream_buffer_c_new_bridge(fPtr, (*C.uchar)(&buffer[0]), C.ulong(len(buffer))) //C.stream_buffer_c_new((*C.uchar)(&buffer[0]), C.ulong(len(buffer)))
 	if !out.Check() {
 		return nil, fmt.Errorf("unable to create BufferStream")
 	}

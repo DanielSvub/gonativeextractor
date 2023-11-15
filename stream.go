@@ -113,8 +113,9 @@ func (ego *FileStream) Close() error {
 Structure representing buffer over heap memory.
 */
 type BufferStream struct {
-	Buffer []byte
-	Ptr    *C.struct_stream_buffer_c
+	Buffer    []byte
+	Ptr       *C.struct_stream_buffer_c
+	dlHandler unsafe.Pointer
 }
 
 /*
@@ -136,6 +137,15 @@ func NewBufferStream(buffer []byte) (*BufferStream, error) {
 	if !out.Check() {
 		return nil, fmt.Errorf("unable to create BufferStream")
 	}
+
+	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
+	defer C.free(unsafe.Pointer(nativeextractorpath))
+	fmt.Println("Dlopening nativeextractor")
+	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_LAZY)
+	if out.dlHandler == nil {
+		panic("Can not dlopen libnativeextractor.so")
+	}
+
 	return &out, nil
 }
 
@@ -169,8 +179,13 @@ func (ego *BufferStream) Close() error {
 	if ego.Ptr == nil {
 		return fmt.Errorf("bufferStream has been already closed")
 	}
-	C.stream_c_destroy(&ego.Ptr.stream)
+	fName := C.CString("stream_c_destroy")
+	defer C.free(unsafe.Pointer(fName))
+	fPtr := C.dlsym(out.dlHandler, fName)
+	C.stream_c_destroy_bridge(fPtr, &ego.Ptr.stream)
+	//	C.stream_c_destroy(&ego.Ptr.stream)
 	C.free(unsafe.Pointer(ego.Ptr))
 	ego.Ptr = nil
+	C.dlclose(ego.dlHandler)
 	return nil
 }

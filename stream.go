@@ -17,9 +17,9 @@ package gonativeextractor
    }
 
 
-   stream_file_c * stream_file_c_new_bridge(void * f, string path)
+   stream_file_c * stream_file_c_new_bridge(void * f, const char* path)
    {
-      return ((stream_file_c * (*) (string))f)( path);
+      return ((stream_file_c * (*) (const char*))f)( path);
    }
 
 

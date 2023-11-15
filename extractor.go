@@ -1,13 +1,12 @@
 package gonativeextractor
 
 /*
-   //#cgo CFLAGS: -I/usr/include/nativeextractor
-   #cgo LDFLAGS:  -lglib-2.0 -ldl
+   #cgo LDFLAGS: -lglib-2.0 -ldl
    #include <dlfcn.h>
    #include <string.h>
-   #include <nativeextractor/common.h>
-   #include <nativeextractor/extractor.h>
-   #include <nativeextractor/stream.h>
+   //#include <nativeextractor/common.h>
+   //#include <nativeextractor/extractor.h>
+   //#include <nativeextractor/stream.h>
 
    void cleanup_fun_bridge(void * f, extractor_c * self)
    {

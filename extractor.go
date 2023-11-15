@@ -9,24 +9,30 @@ package gonativeextractor
    #include <nativeextractor/extractor.h>
    #include <nativeextractor/stream.h>
 
-   void extractor_c_destroy(extractor_c * self);
-   bool extractor_c_set_stream(extractor_c * self, stream_c * stream);
-   void extractor_c_unset_stream(extractor_c * self);
-   bool extractor_set_flags(extractor_c * self, unsigned flags);
-   bool extractor_unset_flags(extractor_c * self, unsigned flags);
-   occurrence_t** next(extractor_c * self, unsigned batch);
-
-
+   void cleanup_fun_bridge(void * f, extractor_c * self)
+   {
+      return ((void (*)(extractor_c *))f)(self);
+   }
+   bool extractor_c_set_stream_bridge(void * f, extractor_c * self, stream_c * stream)
+   {
+      return ((bool (*)(extractor_c *, stream_c *))f)(self, stream);
+   }
+   bool flags_fun_bridge(void * f, extractor_c * self, unsigned flags)
+   {
+      return ((bool (*)(extractor_c *, unsigned))f)(self, flags);
+   }
+   occurrence_t** next_bridge(void * f, extractor_c * self, unsigned batch)
+   {
+      return ((occurrence_t** (*)(extractor_c *, unsigned))f)(self, batch);
+   }
    bool extractor_c_add_miner_from_so_bridge(void *f, extractor_c * self, const char * miner_so_path, const char * miner_name, void * params)
    {
      return ((bool (*)(extractor_c *, const char *, const char *, void* ))f)(self, miner_so_path, miner_name, params);
    }
-
    const char * extractor_get_last_error_bridge(void * f, extractor_c * self)
    {
      return ((const char * (*)(extractor_c *))f)(self);
    }
-
    extractor_c * extractor_c_new_bridge(void * f, int threads, miner_c ** miners)
    {
      return ((extractor_c * (*)(int, miner_c **))f)(threads, miners);
@@ -154,12 +160,16 @@ func (ego *Extractor) Destroy() error {
 			return err
 		}
 	}
-	C.dlclose(ego.dlHandler)
 
-	C.extractor_c_destroy(ego.extractor)
+	fName := C.CString("extractor_c_destroy")
+	defer C.free(unsafe.Pointer(fName))
+	fPtr := C.dlsym(ego.dlHandler, fName)
+	C.cleanup_fun_bridge(fPtr, ego.extractor) //C.extractor_c_destroy(ego.extractor
+
 	C.free(unsafe.Pointer(ego.extractor))
 	ego.extractor = nil
 
+	C.dlclose(ego.dlHandler)
 	return nil
 }
 
@@ -173,7 +183,10 @@ Returns:
   - error if any occurred, nil otherwise.
 */
 func (ego *Extractor) SetStream(stream Streamer) error {
-	ok := C.extractor_c_set_stream(ego.extractor, stream.GetStream())
+	fName := C.CString("extractor_c_set_stream")
+	defer C.free(unsafe.Pointer(fName))
+	fPtr := C.dlsym(ego.dlHandler, fName)
+	ok := C.extractor_c_set_stream_bridge(fPtr, ego.extractor, stream.GetStream()) //C.extractor_c_set_stream(ego.extractor, stream.GetStream())
 	if !ok {
 		return fmt.Errorf("unable to set stream")
 	}
@@ -185,7 +198,10 @@ func (ego *Extractor) SetStream(stream Streamer) error {
 Dettaches the stream from the Extractor.
 */
 func (ego *Extractor) UnsetStream() {
-	C.extractor_c_unset_stream(ego.extractor)
+	fName := C.CString("extractor_c_unset_stream")
+	defer C.free(unsafe.Pointer(fName))
+	fPtr := C.dlsym(ego.dlHandler, fName)
+	C.cleanup_fun_bridge(fPtr, ego.extractor) //C.extractor_c_unset_stream(ego.extractor)
 	ego.stream = nil
 }
 
@@ -199,7 +215,10 @@ Returns:
   - error if any occurred, nil otherwise.
 */
 func (ego *Extractor) SetFlags(flags uint32) error {
-	ok := C.extractor_set_flags(ego.extractor, C.uint(flags))
+	fName := C.CString("extractor_set_flags")
+	defer C.free(unsafe.Pointer(fName))
+	fPtr := C.dlsym(ego.dlHandler, fName)
+	ok := C.flags_fun_bridge(fPtr, ego.extractor, C.uint(flags)) //C.extractor_set_flags(ego.extractor, C.uint(flags))
 	if !ok {
 		return fmt.Errorf("unable to set flags")
 	}
@@ -217,7 +236,10 @@ Returns:
   - error if any occurred, nil otherwise.
 */
 func (ego *Extractor) UnsetFlags(flags uint32) error {
-	ok := C.extractor_unset_flags(ego.extractor, C.uint(flags))
+	fName := C.CString("extractor_unset_flags")
+	defer C.free(unsafe.Pointer(fName))
+	fPtr := C.dlsym(ego.dlHandler, fName)
+	ok := C.flags_fun_bridge(fPtr, ego.extractor, C.uint(flags)) // C.extractor_unset_flags(ego.extractor, C.uint(flags))
 	if !ok {
 		return fmt.Errorf("unable to unset flags")
 	}
@@ -335,8 +357,11 @@ func (ego *Extractor) Next() (Occurrencer, error) {
 	if ego.stream == nil {
 		return nil, fmt.Errorf("stream is not set")
 	}
+	fName := C.CString("next")
+	defer C.free(unsafe.Pointer(fName))
+	fPtr := C.dlsym(ego.dlHandler, fName)
 
-	result := C.next(ego.extractor, C.uint(ego.batch))
+	result := C.next_bridge(fPtr, ego.extractor, C.uint(ego.batch)) //C.next(ego.extractor, C.uint(ego.batch))
 
 	return &Occurrence{result}, nil
 

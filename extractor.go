@@ -79,7 +79,7 @@ const (
 /*
 Default path to libnativeextractor.so.
 */
-const DEFAULT_NATIVEEXTRACOTR_PATH = "/usr/lib"
+const DEFAULT_NATIVEEXTRACOTR_PATH = "."
 
 /*
 Default path to .so libs representing miners.

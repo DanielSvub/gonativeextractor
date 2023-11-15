@@ -5,18 +5,17 @@ package gonativeextractor
    #cgo LDFLAGS:  -lglib-2.0 -ldl
    #include <dlfcn.h>
    #include <string.h>
-   #include <nativeextractor/common.h>
+ //  #include <nativeextractor/common.h>
    #include <nativeextractor/extractor.h>
-   #include <nativeextractor/stream.h>
-   bool extractor_c_add_miner_from_so(extractor_c * self, const char * miner_so_path, const char * miner_name, void * params );
-   const char * extractor_get_last_error(extractor_c * self);
+  // #include <nativeextractor/stream.h>
+
    void extractor_c_destroy(extractor_c * self);
    bool extractor_c_set_stream(extractor_c * self, stream_c * stream);
    void extractor_c_unset_stream(extractor_c * self);
    bool extractor_set_flags(extractor_c * self, unsigned flags);
    bool extractor_unset_flags(extractor_c * self, unsigned flags);
    occurrence_t** next(extractor_c * self, unsigned batch);
-   const char * extractor_get_last_error(extractor_c * self);
+
 
    bool extractor_c_add_miner_from_so_bridge(void *f, extractor_c * self, const char * miner_so_path, const char * miner_name, void * params)
    {
@@ -123,6 +122,7 @@ func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 	miners := (**C.struct_miner_c)(C.calloc(1, C.ulong(unsafe.Sizeof(&miner))))
 	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
 	defer C.free(unsafe.Pointer(nativeextractorpath))
+	fmt.Println("Dlopening nativeextractor")
 	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_LAZY)
 	if out.dlHandler == nil {
 		panic("Can not dlopen libnativeextractor.so")
@@ -242,14 +242,14 @@ func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) err
 	} else {
 		data = unsafe.Pointer(&params[0])
 	}
-	fmt.Println("Loading miner: ", sodir, symbol)
+	//fmt.Println("Loading miner: ", sodir, symbol)
 	fName := C.CString("extractor_c_add_miner_from_so")
 	defer C.free(unsafe.Pointer(fName))
 	fPtr := C.dlsym(ego.dlHandler, fName)
 	extractorAdded := C.extractor_c_add_miner_from_so_bridge(fPtr, ego.extractor, C.CString(sodir), C.CString(symbol), data)
 
 	if extractorAdded { //C.extractor_c_add_miner_from_so(ego.extractor, C.CString(sodir), C.CString(symbol), data) {
-		fmt.Println("OK")
+		//	fmt.Println("OK")
 		return nil
 	}
 

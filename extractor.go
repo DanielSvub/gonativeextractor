@@ -51,6 +51,16 @@ import (
 )
 
 /*
+Constants for valid NativeExtractor flags.
+*/
+const (
+	// Disables enclosed occurrence feature.
+	E_NO_ENCLOSED_OCCURRENCES = 1 << 0
+	// Enables results ascending sorting of occurrence records.
+	E_SORT_RESULTS = 1 << 1
+)
+
+/*
 Structure with information about a miner.
 */
 type DlSymbol struct {
@@ -65,16 +75,6 @@ type DlSymbol struct {
 	// Pointer to the loaded .so library
 	Ldptr unsafe.Pointer
 }
-
-/*
-Constants for valid NativeExtractor flags.
-*/
-const (
-	// Disables enclosed occurrence feature.
-	E_NO_ENCLOSED_OCCURRENCES = 1 << 0
-	// Enables results ascending sorting of occurrence records.
-	E_SORT_RESULTS = 1 << 1
-)
 
 /*
 Default path to libnativeextractor.so.
@@ -126,6 +126,7 @@ func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 
 	miner := &C.struct_miner_c{}
 	miners := (**C.struct_miner_c)(C.calloc(1, C.ulong(unsafe.Sizeof(&miner))))
+	println("Dlopening: ", DEFAULT_NATIVEEXTRACOTR_PATH+"/libnativeextractor.so")
 	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
 	defer C.free(unsafe.Pointer(nativeextractorpath))
 	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_NODELETE|C.RTLD_LAZY)

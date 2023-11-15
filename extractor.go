@@ -128,7 +128,6 @@ func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 	miners := (**C.struct_miner_c)(C.calloc(1, C.ulong(unsafe.Sizeof(&miner))))
 	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
 	defer C.free(unsafe.Pointer(nativeextractorpath))
-	fmt.Println("Dlopening nativeextractor")
 	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_NODELETE|C.RTLD_LAZY)
 	if out.dlHandler == nil {
 		panic("Can not dlopen libnativeextractor.so")
@@ -264,14 +263,15 @@ func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) err
 	} else {
 		data = unsafe.Pointer(&params[0])
 	}
-	//fmt.Println("Loading miner: ", sodir, symbol)
+
 	fName := C.CString("extractor_c_add_miner_from_so")
 	defer C.free(unsafe.Pointer(fName))
 	fPtr := C.dlsym(ego.dlHandler, fName)
+	fmt.Println("Loading miner: ", sodir, symbol)
 	extractorAdded := C.extractor_c_add_miner_from_so_bridge(fPtr, ego.extractor, C.CString(sodir), C.CString(symbol), data)
 
 	if extractorAdded { //C.extractor_c_add_miner_from_so(ego.extractor, C.CString(sodir), C.CString(symbol), data) {
-		//	fmt.Println("OK")
+		fmt.Println("OK")
 		return nil
 	}
 	return ego.GetLastError()

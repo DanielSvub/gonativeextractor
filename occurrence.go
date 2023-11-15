@@ -1,8 +1,7 @@
 package gonativeextractor
 
 /*
-#cgo CFLAGS: -I/usr/include/nativeextractor
-#cgo LDFLAGS: -lnativeextractor -lglib-2.0 -ldl
+#cgo LDFLAGS:  -lglib-2.0 -ldl
 #include <string.h>
 #include <nativeextractor/common.h>
 #include <nativeextractor/extractor.h>

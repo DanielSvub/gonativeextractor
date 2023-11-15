@@ -1,14 +1,13 @@
 package gonativeextractor
 
 /*
-#cgo CFLAGS: -I/usr/include/nativeextractor
-#cgo LDFLAGS: -lnativeextractor -lglib-2.0 -ldl
-#include <nativeextractor/common.h>
-#include <nativeextractor/extractor.h>
-#include <nativeextractor/stream.h>
-bool extractor_c_add_miner_from_so(extractor_c * self, const char * miner_so_path, const char * miner_name, void * params );
-const char * extractor_get_last_error(extractor_c * self);
-void stream_c_destroy(stream_c * self);
+   #cgo LDFLAGS: -lglib-2.0 -ldl
+   #include <nativeextractor/common.h>
+   #include <nativeextractor/stream.h>
+    void stream_c_destroy_bridge(void * f, stream_c * self)
+   {
+      return ((void (*)(extractor_c *))f)(self);
+   }
 */
 import "C"
 import (
@@ -31,8 +30,9 @@ type Streamer interface {
 Structure representing stream from file.
 */
 type FileStream struct {
-	Ptr  *C.struct_stream_file_c
-	Path string
+	Ptr       *C.struct_stream_file_c
+	Path      string
+	dlHandler unsafe.Pointer
 }
 
 /*
@@ -75,6 +75,14 @@ func NewFileStream(path string) (*FileStream, error) {
 		return nil, fmt.Errorf("unable to create FileStream")
 	}
 
+	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
+	defer C.free(unsafe.Pointer(nativeextractorpath))
+	fmt.Println("Dlopening nativeextractor")
+	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_LAZY)
+	if out.dlHandler == nil {
+		panic("Can not dlopen libnativeextractor.so")
+	}
+
 	return &out, nil
 }
 
@@ -88,9 +96,14 @@ func (ego *FileStream) Close() error {
 	if ego.Ptr == nil {
 		return fmt.Errorf("fileStream has been already closed")
 	}
-	C.stream_c_destroy(&ego.Ptr.stream)
+
+	fName := C.CString("stream_c_destroy")
+	defer C.free(unsafe.Pointer(fName))
+	fPtr := C.dlsym(out.dlHandler, fName)
+	C.stream_c_destroy_bridge(fPtr, &ego.Ptr.stream) //C.stream_c_destroy(&ego.Ptr.stream)
 	C.free(unsafe.Pointer(ego.Ptr))
 	ego.Ptr = nil
+	C.dlclose(ego.dlHandler)
 	return nil
 
 }

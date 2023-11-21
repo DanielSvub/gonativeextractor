@@ -130,7 +130,7 @@ func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 	defer C.free(unsafe.Pointer(nativeextractorpath))
 	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_GLOBAL|C.RTLD_NOW)
 	if out.dlHandler == nil {
-		panic("Can not dlopen libnativeextractor.so", C.dlerror())
+		panic("Can not dlopen libnativeextractor.so" + C.dlerror())
 	}
 	fName := C.CString("extractor_c_new")
 	defer C.free(unsafe.Pointer(fName))

@@ -1,7 +1,7 @@
 package gonativeextractor
 
 /*
-   #cgo LDFLAGS: -lglib-2.0 -ldl
+   #cgo LDFLAGS: -lglib-2.0 -ldl -l
    #include <dlfcn.h>
    #include <string.h>
    #include <nativeextractor/common.h>
@@ -267,11 +267,9 @@ func (ego *Extractor) AddMinerSo(sodir string, symbol string, params []byte) err
 	fName := C.CString("extractor_c_add_miner_from_so")
 	defer C.free(unsafe.Pointer(fName))
 	fPtr := C.dlsym(ego.dlHandler, fName)
-	fmt.Println("Loading miner: ", sodir, symbol, data)
 	minerAdded := C.extractor_c_add_miner_from_so_bridge(fPtr, ego.extractor, C.CString(sodir), C.CString(symbol), data)
 
 	if minerAdded { //C.extractor_c_add_miner_from_so(ego.extractor, C.CString(sodir), C.CString(symbol), data) {
-		fmt.Println("OK, miner ", sodir, symbol, " added")
 		return nil
 	}
 	return ego.GetLastError()

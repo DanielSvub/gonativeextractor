@@ -79,7 +79,7 @@ type DlSymbol struct {
 /*
 Default path to libnativeextractor.so.
 */
-const DEFAULT_NATIVEEXTRACOTR_PATH = "/tmp"
+const DEFAULT_NATIVEEXTRACOTR_PATH = "/usr/lib/"
 
 /*
 Default path to .so libs representing miners.

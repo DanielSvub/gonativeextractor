@@ -123,11 +123,6 @@ func NewExtractor(batch int, threads int, flags uint32) *Extractor {
 	miners := (**C.struct_miner_c)(C.calloc(1, C.ulong(unsafe.Sizeof(&miner))))
 	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
 	defer C.free(unsafe.Pointer(nativeextractorpath))
-	if C.dlopen(C.CString("/lib/x86_64-linux-gnu/libc.so.6"), C.RTLD_GLOBAL|C.RTLD_NOW) == nil {
-		panic("Can not open glibc" + C.GoString(C.dlerror()))
-	} else {
-		fmt.Println("GLIBC loaded")
-	}
 	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_GLOBAL|C.RTLD_LAZY)
 	if out.dlHandler == nil {
 		panic("Can not dlopen libnativeextractor.so" + C.GoString(C.dlerror()))

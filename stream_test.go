@@ -3,7 +3,7 @@ package gonativeextractor_test
 import (
 	"testing"
 
-	"github.com/SpongeData-cz/gonativeextractor"
+	"github.com/DanielSvub/gonativeextractor"
 )
 
 func TestFileStream(t *testing.T) {

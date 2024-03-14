@@ -1,28 +1,14 @@
 package gonativeextractor
 
 /*
-   #cgo LDFLAGS: -lglib-2.0 -ldl
-   #include <dlfcn.h>
-   #include <nativeextractor/common.h>
-   #include <nativeextractor/stream.h>
-
-   void stream_c_destroy_bridge(void * f, stream_c * self)
-   {
-      return ((void (*)(stream_c *))f)(self);
-   }
-
-   stream_buffer_c * stream_buffer_c_new_bridge(void * f, unsigned char * buffer, unsigned long length)
-   {
-      return ((stream_buffer_c * (*) (unsigned char *, unsigned long))f)(buffer, length);
-   }
-
-
-   stream_file_c * stream_file_c_new_bridge(void * f, const char* path)
-   {
-      return ((stream_file_c * (*) (const char*))f)( path);
-   }
-
-
+#cgo CFLAGS: -I/usr/include/nativeextractor
+#cgo LDFLAGS: -lnativeextractor -lglib-2.0 -ldl
+#include <nativeextractor/common.h>
+#include <nativeextractor/extractor.h>
+#include <nativeextractor/stream.h>
+bool extractor_c_add_miner_from_so(extractor_c * self, const char * miner_so_path, const char * miner_name, void * params );
+const char * extractor_get_last_error(extractor_c * self);
+void stream_c_destroy(stream_c * self);
 */
 import "C"
 import (
@@ -45,9 +31,8 @@ type Streamer interface {
 Structure representing stream from file.
 */
 type FileStream struct {
-	Ptr       *C.struct_stream_file_c
-	Path      string
-	dlHandler unsafe.Pointer
+	Ptr  *C.struct_stream_file_c
+	Path string
 }
 
 /*
@@ -85,20 +70,7 @@ func NewFileStream(path string) (*FileStream, error) {
 		return nil, fmt.Errorf("file does not exist")
 	}
 	out := FileStream{Path: path}
-
-	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
-	defer C.free(unsafe.Pointer(nativeextractorpath))
-	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_GLOBAL|C.RTLD_LAZY)
-	if out.dlHandler == nil {
-		panic("Can not dlopen libnativeextractor.so")
-	}
-
-	fName := C.CString("stream_file_c_new")
-	defer C.free(unsafe.Pointer(fName))
-	fPtr := C.dlsym(out.dlHandler, fName)
-	filePath := C.CString(path)
-	defer C.free(unsafe.Pointer(filePath))
-	out.Ptr = C.stream_file_c_new_bridge(fPtr, filePath) //C.stream_file_c_new(C.CString(path))
+	out.Ptr = C.stream_file_c_new(C.CString(path))
 	if !out.Check() {
 		return nil, fmt.Errorf("unable to create FileStream")
 	}
@@ -116,14 +88,9 @@ func (ego *FileStream) Close() error {
 	if ego.Ptr == nil {
 		return fmt.Errorf("fileStream has been already closed")
 	}
-
-	fName := C.CString("stream_c_destroy")
-	defer C.free(unsafe.Pointer(fName))
-	fPtr := C.dlsym(ego.dlHandler, fName)
-	C.stream_c_destroy_bridge(fPtr, &ego.Ptr.stream) //C.stream_c_destroy(&ego.Ptr.stream)
+	C.stream_c_destroy(&ego.Ptr.stream)
 	C.free(unsafe.Pointer(ego.Ptr))
 	ego.Ptr = nil
-	C.dlclose(ego.dlHandler)
 	return nil
 
 }
@@ -132,9 +99,8 @@ func (ego *FileStream) Close() error {
 Structure representing buffer over heap memory.
 */
 type BufferStream struct {
-	Buffer    []byte
-	Ptr       *C.struct_stream_buffer_c
-	dlHandler unsafe.Pointer
+	Buffer []byte
+	Ptr    *C.struct_stream_buffer_c
 }
 
 /*
@@ -152,22 +118,10 @@ func NewBufferStream(buffer []byte) (*BufferStream, error) {
 		return nil, fmt.Errorf("nil buffer given")
 	}
 	out := BufferStream{Buffer: buffer}
-
-	nativeextractorpath := C.CString(DEFAULT_NATIVEEXTRACOTR_PATH + "/libnativeextractor.so")
-	defer C.free(unsafe.Pointer(nativeextractorpath))
-	out.dlHandler = C.dlopen(nativeextractorpath, C.RTLD_GLOBAL|C.RTLD_LAZY)
-	if out.dlHandler == nil {
-		panic("Can not dlopen libnativeextractor.so")
-	}
-
-	fName := C.CString("stream_buffer_c_new")
-	defer C.free(unsafe.Pointer(fName))
-	fPtr := C.dlsym(out.dlHandler, fName)
-	out.Ptr = C.stream_buffer_c_new_bridge(fPtr, (*C.uchar)(&buffer[0]), C.ulong(len(buffer))) //C.stream_buffer_c_new((*C.uchar)(&buffer[0]), C.ulong(len(buffer)))
+	out.Ptr = C.stream_buffer_c_new((*C.uchar)(&buffer[0]), C.ulong(len(buffer)))
 	if !out.Check() {
 		return nil, fmt.Errorf("unable to create BufferStream")
 	}
-
 	return &out, nil
 }
 
@@ -201,13 +155,8 @@ func (ego *BufferStream) Close() error {
 	if ego.Ptr == nil {
 		return fmt.Errorf("bufferStream has been already closed")
 	}
-	fName := C.CString("stream_c_destroy")
-	defer C.free(unsafe.Pointer(fName))
-	fPtr := C.dlsym(ego.dlHandler, fName)
-	C.stream_c_destroy_bridge(fPtr, &ego.Ptr.stream)
-	//	C.stream_c_destroy(&ego.Ptr.stream)
+	C.stream_c_destroy(&ego.Ptr.stream)
 	C.free(unsafe.Pointer(ego.Ptr))
 	ego.Ptr = nil
-	C.dlclose(ego.dlHandler)
 	return nil
 }

@@ -1,3 +1,3 @@
-module github.com/SpongeData-cz/gonativeextractor
+module github.com/DanielSvub/gonativeextractor
 
 go 1.17
